@@ -1,0 +1,42 @@
+{
+  "name": "clon",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CLON — your life, your rules, your clone. An open-source AI personal operating system orchestrating specialized agent clones.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20.9"
+  },
+  "dependencies": {
+    "@composio/core": "^0.25.0",
+    "@react-three/fiber": "^9.8.2",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.59.0",
+    "motion": "^14.4.0",
+    "next": "^16.4.2",
+    "parallel-web": "^1.3.5",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-is": "^19.3.1",
+    "recharts": "^3.10.1",
+    "tailwind-merge": "^3.7.0",
+    "three": "^0.186.1",
+    "zod": "^4.6.7",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.186.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,333 @@
+@import "tailwindcss";
+
+/* ──────────────────────────────────────────────────────────────
+   CLON design tokens
+   ────────────────────────────────────────────────────────────── */
+@theme {
+  --color-void: #050816;
+  --color-abyss: #0a1020;
+  --color-panel: #10192b;
+  --color-surface: #172338;
+  --color-raised: #1d2b45;
+  --color-line: rgb(133 147 179 / 0.13);
+  --color-line-strong: rgb(133 147 179 / 0.24);
+
+  --color-ink: #dce7ff;
+  --color-soft: #b4c2e0;
+  --color-mute: #8593b3;
+  --color-faint: #5a6684;
+
+  --color-cyan: #5be7f5;
+  --color-violet: #9879ff;
+  --color-comm: #5aa8ff;
+  --color-work: #8088ff;
+  --color-life: #3fd8c4;
+  --color-fit: #c4f25f;
+
+  --color-ok: #5cf2a8;
+  --color-warn: #ffc56b;
+  --color-danger: #ff6b8a;
+
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+  --font-display: var(--font-grotesk), var(--font-geist), ui-sans-serif, sans-serif;
+
+  --radius-panel: 20px;
+  --radius-card: 16px;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-pulse-soft: pulse-soft 2.8s ease-in-out infinite;
+  --animate-spin-slow: spin 22s linear infinite;
+  --animate-spin-slower: spin 40s linear infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-shimmer: shimmer 2.2s linear infinite;
+  --animate-dash: dash 1.6s linear infinite;
+  --animate-scan: scan 5.5s ease-in-out infinite;
+
+  @keyframes pulse-soft {
+    0%,
+    100% {
+      opacity: 0.55;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.06);
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+  @keyframes shimmer {
+    from {
+      background-position: -200% 0;
+    }
+    to {
+      background-position: 200% 0;
+    }
+  }
+  @keyframes dash {
+    to {
+      stroke-dashoffset: -24;
+    }
+  }
+  @keyframes scan {
+    0% {
+      transform: translateY(-10%);
+      opacity: 0;
+    }
+    15% {
+      opacity: 1;
+    }
+    85% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(110%);
+      opacity: 0;
+    }
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Base
+   ────────────────────────────────────────────────────────────── */
+:root {
+  color-scheme: dark;
+  --accent: #5be7f5;
+}
+
+html,
+body {
+  background: var(--color-void);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgb(91 231 245 / 0.28);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--accent) 80%, white);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(133 147 179 / 0.25) transparent;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Atmosphere — layered glows, grid and grain behind every page
+   ────────────────────────────────────────────────────────────── */
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 40rem at 50% -10%, rgb(91 231 245 / 0.08), transparent 60%),
+    radial-gradient(48rem 36rem at 12% 110%, rgb(152 121 255 / 0.09), transparent 60%),
+    radial-gradient(40rem 30rem at 95% 60%, rgb(90 168 255 / 0.05), transparent 60%),
+    linear-gradient(180deg, #050816 0%, #070b1c 55%, #050816 100%);
+}
+
+.atmosphere::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgb(133 147 179 / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(133 147 179 / 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, black 10%, transparent 75%);
+}
+
+.atmosphere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Glass materials
+   ────────────────────────────────────────────────────────────── */
+.glass {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgb(29 43 69 / 0.42), rgb(16 25 43 / 0.32)),
+    radial-gradient(120% 80% at 0% 0%, color-mix(in oklab, var(--accent) 5%, transparent), transparent 60%);
+  border: 1px solid var(--color-line);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.045),
+    0 24px 60px -30px rgb(0 0 0 / 0.7);
+}
+
+/* Hairline gradient rim — gives panels a lit top edge */
+.glass-rim::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    160deg,
+    color-mix(in oklab, var(--accent) 38%, transparent),
+    transparent 32%,
+    transparent 68%,
+    rgb(152 121 255 / 0.18)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.55;
+  transition: opacity 0.4s var(--ease-out-expo);
+}
+
+.glass-interactive {
+  transition:
+    transform 0.45s var(--ease-out-expo),
+    border-color 0.45s var(--ease-out-expo),
+    box-shadow 0.45s var(--ease-out-expo);
+}
+.glass-interactive:hover {
+  border-color: color-mix(in oklab, var(--accent) 34%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 0 0 1px color-mix(in oklab, var(--accent) 10%, transparent),
+    0 30px 70px -30px color-mix(in oklab, var(--accent) 35%, transparent);
+}
+.glass-interactive:hover.glass-rim::before {
+  opacity: 1;
+}
+
+/* Cursor-following light used by interactive cards */
+.spotlight {
+  background: radial-gradient(
+    22rem 22rem at var(--mx, 50%) var(--my, 0%),
+    color-mix(in oklab, var(--accent) 11%, transparent),
+    transparent 60%
+  );
+}
+
+/* Accent helpers driven by the --accent custom property */
+.text-accent {
+  color: var(--accent);
+}
+.bg-accent-soft {
+  background: color-mix(in oklab, var(--accent) 12%, transparent);
+}
+.border-accent-soft {
+  border-color: color-mix(in oklab, var(--accent) 30%, transparent);
+}
+.glow-accent {
+  box-shadow: 0 0 24px -4px color-mix(in oklab, var(--accent) 70%, transparent);
+}
+.ring-accent {
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 45%, transparent);
+}
+
+.text-gradient {
+  background: linear-gradient(100deg, #eaf6ff 10%, #9ff3fb 45%, #b7a6ff 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgb(133 147 179 / 0.06) 0%,
+    rgb(133 147 179 / 0.14) 50%,
+    rgb(133 147 179 / 0.06) 100%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+.scanlines {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgb(91 231 245 / 0.05) 0px,
+    rgb(91 231 245 / 0.05) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Form controls share one look */
+.field {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--color-line);
+  background: rgb(5 8 22 / 0.55);
+  padding: 0.6rem 0.8rem;
+  font-size: 0.875rem;
+  color: var(--color-ink);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+.field::placeholder {
+  color: var(--color-faint);
+}
+.field:focus {
+  outline: none;
+  border-color: color-mix(in oklab, var(--accent) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 14%, transparent);
+}
+select.field {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #8593b3 50%),
+    linear-gradient(135deg, #8593b3 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) 55%,
+    calc(100% - 11px) 55%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 2rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
