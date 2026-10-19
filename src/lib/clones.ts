@@ -11,7 +11,8 @@ export interface CloneDefinition {
   /** Tools this clone may call through the shared agent runtime. */
   tools: string[];
   integrations: string[];
-  suggestions: string[];
+  /** Short chip label → the full command it runs (also cycled as the input placeholder). */
+  suggestions: { label: string; prompt: string }[];
 }
 
 export const CLONES: Record<CloneId, CloneDefinition> = {
@@ -27,10 +28,10 @@ export const CLONES: Record<CloneId, CloneDefinition> = {
     tools: ["calendar.getEvents", "calendar.checkAvailability", "agents.delegate", "approvals.request"],
     integrations: ["Google Calendar", "Gmail", "Parallel"],
     suggestions: [
-      "Help me organize tomorrow",
-      "Check my calendar for tonight, find relevant tech events in San Francisco, and prepare an email inviting my friend to one of them",
-      "Find a free 45-minute workout slot tomorrow",
-      "Summarize my unread emails",
+      { label: "Plan tomorrow", prompt: "Help me organize tomorrow" },
+      { label: "Event + invite", prompt: "Check my calendar for tonight, find relevant tech events in San Francisco, and prepare an email inviting my friend to one of them" },
+      { label: "Workout slot", prompt: "Find a free 45-minute workout slot tomorrow" },
+      { label: "Inbox summary", prompt: "Summarize my unread emails" },
     ],
   },
   communication: {
@@ -45,9 +46,9 @@ export const CLONES: Record<CloneId, CloneDefinition> = {
     tools: ["gmail.listMessages", "gmail.createDraft", "calendar.getEvents", "calendar.suggestTimeSlots"],
     integrations: ["Gmail", "Google Calendar"],
     suggestions: [
-      "Summarize my unread emails",
-      "Draft a reply to Maya with times I'm free",
-      "Which emails need a reply today?",
+      { label: "Inbox summary", prompt: "Summarize my unread emails" },
+      { label: "Reply to Maya", prompt: "Draft a reply to Maya with times I'm free" },
+      { label: "Needs a reply", prompt: "Which emails need a reply today?" },
     ],
   },
   work: {
@@ -62,9 +63,9 @@ export const CLONES: Record<CloneId, CloneDefinition> = {
     tools: ["tasks.list", "calendar.getEvents", "calendar.suggestTimeSlots", "gmail.listMessages"],
     integrations: ["Google Calendar", "Gmail", "Notion · planned", "Slack · planned"],
     suggestions: [
-      "What are my top priorities tomorrow?",
-      "Brief me for my next meeting",
-      "Find focus time for the seed deck",
+      { label: "Top priorities", prompt: "What are my top priorities tomorrow?" },
+      { label: "Next meeting brief", prompt: "Brief me for my next meeting" },
+      { label: "Focus time", prompt: "Find focus time for the seed deck" },
     ],
   },
   life: {
@@ -79,9 +80,9 @@ export const CLONES: Record<CloneId, CloneDefinition> = {
     tools: ["research.searchEvents", "calendar.getEvents", "calendar.checkAvailability"],
     integrations: ["Parallel", "Google Calendar"],
     suggestions: [
-      "Find interesting AI events tonight after 6 PM",
-      "Plan something fun for Saturday evening",
-      "When am I free this week?",
+      { label: "AI events tonight", prompt: "Find interesting AI events tonight after 6 PM" },
+      { label: "Saturday plan", prompt: "Plan something fun for Saturday evening" },
+      { label: "Free this week", prompt: "When am I free this week?" },
     ],
   },
   fitness: {
@@ -96,10 +97,10 @@ export const CLONES: Record<CloneId, CloneDefinition> = {
     tools: ["workouts.list", "calendar.getEvents", "calendar.suggestTimeSlots"],
     integrations: ["Google Calendar", "Manual logging", "Strava · planned", "Health Connect · planned"],
     suggestions: [
-      "Find a free 45-minute workout slot tomorrow",
-      "Organize three gym sessions this week without conflicting with my meetings",
-      "Show my training consistency over the last seven days",
-      "Create a beginner-friendly workout plan for this week",
+      { label: "45-min slot", prompt: "Find a free 45-minute workout slot tomorrow" },
+      { label: "3 gym sessions", prompt: "Organize three gym sessions this week without conflicting with my meetings" },
+      { label: "My consistency", prompt: "Show my training consistency over the last seven days" },
+      { label: "Beginner plan", prompt: "Create a beginner-friendly workout plan for this week" },
     ],
   },
 };

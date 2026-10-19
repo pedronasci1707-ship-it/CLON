@@ -112,13 +112,13 @@ export function MasterHologram({ className, compact = false, onActivate, showLab
                 </span>
                 {running ? (
                   <>
-                    Orchestrating
+                    Working
                     {workingClone && workingClone !== "master" && (
-                      <span style={{ color: CLONES[workingClone].accent }}>· {CLONES[workingClone].short} clone</span>
+                      <span style={{ color: CLONES[workingClone].accent }}>· {CLONES[workingClone].short}</span>
                     )}
                   </>
                 ) : (
-                  <>Master intelligence — ready</>
+                  <>{interactive ? "Open Master" : "Ready"}</>
                 )}
               </div>
             </motion.div>

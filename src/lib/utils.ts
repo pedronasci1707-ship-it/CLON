@@ -35,3 +35,15 @@ export function truncate(s: string, n: number) {
 }
 
 export const EMAIL_RE = /^[^\s@<>()[\],;:"]+@[^\s@<>()[\],;:"]+\.[a-z]{2,}$/i;
+
+/** Email addresses written in the user's notes, in note order, without duplicates. */
+export function emailsInNotes(notes: { text: string }[]) {
+  const found = new Map<string, string>();
+  for (const n of notes) {
+    for (const [email] of n.text.matchAll(/[^\s@<>()[\],;:"]+@[^\s@<>()[\],;:"]+\.[a-z]{2,}/gi)) {
+      const key = email.toLowerCase();
+      if (EMAIL_RE.test(email) && !found.has(key)) found.set(key, n.text);
+    }
+  }
+  return Array.from(found, ([email, note]) => ({ email, note }));
+}

@@ -1,13 +1,12 @@
 "use client";
 
-import { CalendarDays, EyeOff } from "lucide-react";
+import { CalendarDays, EyeOff, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { freeWindows } from "@/lib/availability";
 import { useCalendar, useClock } from "@/lib/hooks";
 import { atLocal, LOCALE } from "@/lib/time";
 import type { CalendarEvent, CloneId } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { ModeBadge } from "@/components/ui/Badge";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
 
 const CATEGORY_COLOR: Record<NonNullable<CalendarEvent["category"]>, string> = {
@@ -73,46 +72,40 @@ export function CalendarSummary({
             </button>
           ))}
         </div>
-        <ModeBadge mode={cal.source === "google" ? "live" : "demo"} className="ml-auto" />
+        {cal.redacted > 0 && (
+          <span
+            className="ml-auto flex items-center gap-1 font-mono text-[10px] text-faint"
+            title={`${cal.redacted} work event${cal.redacted > 1 ? "s" : ""} shown as “Busy” — private to the Work clone`}
+          >
+            <EyeOff className="h-3 w-3" /> {cal.redacted}
+          </span>
+        )}
       </div>
-
-      {cal.redacted > 0 && (
-        <div className="mb-2 flex items-center gap-1.5 text-[11px] text-faint">
-          <EyeOff className="h-3 w-3" /> {cal.redacted} work event{cal.redacted > 1 ? "s" : ""} shown as “Busy” — private to the Work clone
-        </div>
-      )}
 
       {cal.error ? (
         <ErrorState title="Calendar unavailable" body={cal.error} />
       ) : cal.loading || !view ? (
         <LoadingState lines={4} />
       ) : view.rows.length === 0 ? (
-        <EmptyState icon={CalendarDays} title="Nothing scheduled" body="A fully open day." />
+        <EmptyState icon={CalendarDays} title="Open day" />
       ) : (
-        <ul className="space-y-1.5">
+        <ul className="space-y-1">
           {view.rows.map((r, i) =>
             r.kind === "event" ? (
               <li
                 key={r.e.id}
-                className={cn(
-                  "flex items-center gap-3 rounded-xl border border-line bg-white/[0.02] px-3 py-2",
-                  Date.parse(r.e.end) < view.now && "opacity-45",
-                )}
+                title={r.e.location && !r.e.redacted ? r.e.location : undefined}
+                className={cn("flex items-center gap-3 rounded-xl px-2 py-1.5", Date.parse(r.e.end) < view.now && "opacity-40")}
               >
                 <span
-                  className="h-7 w-[3px] shrink-0 rounded-full"
+                  className="h-6 w-[3px] shrink-0 rounded-full"
                   style={{ background: r.e.category ? CATEGORY_COLOR[r.e.category] : "#8593b3" }}
                 />
-                <div className="min-w-0 flex-1">
-                  <div className={cn("truncate text-[13px]", r.e.redacted ? "italic text-mute" : "text-ink")}>{r.e.title}</div>
-                  <div className="font-mono text-[10px] text-faint">
-                    {tf(r.e.start)} – {tf(r.e.end)}
-                    {r.e.location && !r.e.redacted ? ` · ${r.e.location}` : ""}
-                  </div>
-                </div>
+                <span className="w-16 shrink-0 font-mono text-[10.5px] text-faint">{tf(r.e.start)}</span>
+                <span className={cn("min-w-0 flex-1 truncate text-[13px]", r.e.redacted ? "italic text-mute" : "text-ink")}>{r.e.title}</span>
                 {r.e.source === "clon" && (
-                  <span className="shrink-0 font-mono text-[9px] uppercase tracking-widest text-cyan" title="Added by CLON after your approval (demo)">
-                    by clon
+                  <span title="Added by CLON after your approval">
+                    <Sparkles className="h-3 w-3 shrink-0 text-cyan" />
                   </span>
                 )}
                 {Date.parse(r.e.start) <= view.now && Date.parse(r.e.end) > view.now && (
@@ -120,11 +113,11 @@ export function CalendarSummary({
                 )}
               </li>
             ) : (
-              <li key={`free-${i}`} className="flex items-center gap-3 rounded-xl border border-dashed border-ok/20 px-3 py-1.5">
-                <span className="h-5 w-[3px] shrink-0 rounded-full bg-ok/40" />
-                <span className="text-[12px] text-ok/90">Free</span>
-                <span className="font-mono text-[10px] text-faint">
-                  {tf(r.start)} – {tf(r.end)} · {Math.round(r.minutes / 6) / 10}h
+              <li key={`free-${i}`} className="flex items-center gap-3 rounded-xl px-2 py-1">
+                <span className="h-4 w-[3px] shrink-0 rounded-full bg-ok/30" />
+                <span className="w-16 shrink-0 font-mono text-[10.5px] text-ok/70">{tf(r.start)}</span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ok/70">
+                  Free · {Math.round(r.minutes / 6) / 10}h
                 </span>
               </li>
             ),

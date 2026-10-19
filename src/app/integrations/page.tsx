@@ -1,25 +1,12 @@
 "use client";
 
-import {
-  BookOpen,
-  Brain,
-  CalendarDays,
-  Code,
-  FileText,
-  Globe,
-  HeartPulse,
-  LoaderCircle,
-  Mail,
-  MessageSquare,
-  RefreshCw,
-  ShieldCheck,
-  Workflow,
-} from "lucide-react";
+import { Brain, CalendarDays, Globe, LoaderCircle, Mail, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { errorMessage } from "@/lib/agent-client";
 import { useClon } from "@/lib/store";
 import type { SystemStatus } from "@/lib/types";
 import { IntegrationCard, type ConnectionState } from "@/components/integrations/IntegrationCard";
+import { MemoryPanel } from "@/components/integrations/MemoryPanel";
 import { Button } from "@/components/ui/Button";
 import { Segmented } from "@/components/ui/Controls";
 import { GlassPanel, SectionHeader } from "@/components/ui/GlassPanel";
@@ -86,53 +73,49 @@ export default function IntegrationsPage() {
 
   const composioAction = (toolkit: Toolkit) => {
     const state = accountState(system, toolkit);
-    if (state === "not_configured")
-      return <p className="text-[11px] text-faint">Set COMPOSIO_API_KEY on the server to enable connecting.</p>;
+    if (state === "not_configured") return <p className="font-mono text-[10px] text-faint">Needs COMPOSIO_API_KEY</p>;
     if (state === "connected") return null;
     return (
-      <Button variant="accent" size="sm" className="w-full" disabled={busy !== null} onClick={() => connect(toolkit)}>
-        {busy === toolkit ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : null} Connect with Composio
+      <Button variant="accent" size="sm" className="w-full" disabled={busy !== null} onClick={() => connect(toolkit)} title="Opens Composio in a new tab">
+        {busy === toolkit ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : null} Connect
       </Button>
     );
   };
 
   return (
-    <div className="mx-auto max-w-[1200px]">
+    <div className="mx-auto max-w-[1100px]">
       <PageHeader
-        eyebrow="Connected apps"
-        title="Integrations"
-        description="CLON works fully in Demo mode with no accounts. Connect apps to let your clones read and prepare real things — tokens stay on the server, and changes still need your approval."
+        title="Apps"
         action={
-          <Button size="sm" variant="outline" onClick={refresh} disabled={busy !== null}>
-            <RefreshCw className={busy === "refresh" ? "h-3.5 w-3.5 animate-spin" : "h-3.5 w-3.5"} /> Refresh status
+          <Button size="icon" variant="outline" onClick={refresh} disabled={busy !== null} aria-label="Refresh status" title="Refresh status">
+            <RefreshCw className={busy === "refresh" ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
           </Button>
         }
       />
 
       <GlassPanel className="mb-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center">
-          <div className="min-w-0 flex-1">
-            <SectionHeader eyebrow="Data mode" title={mode === "live" ? "Live — using connected accounts" : "Demo — seeded data, simulated actions"} className="mb-1" />
-            <p className="text-xs leading-relaxed text-mute">
-              Demo mode never reads or changes anything real and labels every result. Live mode uses your connected accounts, shows real tool results and never
-              falls back to demo data when something fails.
-            </p>
+        <div
+          className="flex items-center gap-4"
+          title="Demo never reads or changes anything real. Live uses your connected accounts and never falls back to demo data."
+        >
+          <SectionHeader title="Mode" className="mb-0" />
+          <div className="ml-auto">
+            <Segmented<"demo" | "live">
+              label="Data mode"
+              value={mode}
+              onChange={(m) => {
+                if (m === "live" && !system?.liveAvailable) {
+                  setError("Connect Google Calendar or Gmail first.");
+                  return;
+                }
+                setMode(m);
+              }}
+              options={[
+                { value: "demo", label: "Demo" },
+                { value: "live", label: "Live" },
+              ]}
+            />
           </div>
-          <Segmented<"demo" | "live">
-            label="Data mode"
-            value={mode}
-            onChange={(m) => {
-              if (m === "live" && !system?.liveAvailable) {
-                setError("Live mode needs Composio configured and Gmail or Google Calendar connected.");
-                return;
-              }
-              setMode(m);
-            }}
-            options={[
-              { value: "demo", label: "Demo" },
-              { value: "live", label: "Live" },
-            ]}
-          />
         </div>
         {error && <p className="mt-3 rounded-xl border border-danger/25 bg-danger/[0.06] px-3 py-2 text-xs text-danger">{error}</p>}
         {system?.composio.error && (
@@ -140,16 +123,13 @@ export default function IntegrationsPage() {
         )}
       </GlassPanel>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div className="grid gap-5 sm:grid-cols-2">
         <IntegrationCard
           icon={CalendarDays}
-          name="Google Calendar"
-          provider="Composio"
+          name="Calendar"
+          provider="Google Calendar via Composio"
           accent="#5be7f5"
           state={accountState(system, "googlecalendar")}
-          description="The shared calendar service behind every clone: availability, free slots and — after your approval — new events."
-          scopes={["list events", "find free time", "create event · approval required"]}
-          usedBy={["Master", "Communication", "Work", "Life", "Fitness"]}
           enabled={!disabled.includes("googlecalendar")}
           onToggle={() => toggle("googlecalendar")}
           action={composioAction("googlecalendar")}
@@ -157,93 +137,49 @@ export default function IntegrationsPage() {
         <IntegrationCard
           icon={Mail}
           name="Gmail"
-          provider="Composio"
+          provider="Gmail via Composio · reads and drafts, never sends"
           accent="#5aa8ff"
           state={accountState(system, "gmail")}
-          description="Reads recent mail for triage and saves reply drafts to your Drafts folder. CLON has no ability to send email."
-          scopes={["read messages", "create draft"]}
-          usedBy={["Communication", "Work"]}
           enabled={!disabled.includes("gmail")}
           onToggle={() => toggle("gmail")}
           action={composioAction("gmail")}
         />
         <IntegrationCard
           icon={Globe}
-          name="Parallel"
-          provider="Parallel Web Systems"
+          name="Web research"
+          provider="Parallel · sourced events and places"
           accent="#3fd8c4"
           state={!system ? "checking" : system.parallel.configured ? "configured" : "not_configured"}
-          description="Current web research for events and places. Every result carries its source link; dates are only marked verified when the source states them."
-          scopes={["web research"]}
-          usedBy={["Life", "Master"]}
           enabled={!disabled.includes("parallel")}
           onToggle={() => toggle("parallel")}
-          footnote={system?.parallel.configured ? undefined : "Set PARALLEL_API_KEY on the server."}
+          footnote={system?.parallel.configured ? undefined : "Needs PARALLEL_API_KEY"}
         />
         <IntegrationCard
           icon={Brain}
-          name="Language model"
-          provider={system?.llm.configured ? system.llm.model ?? "OpenAI-compatible" : "OpenAI-compatible endpoint"}
+          name="Model"
+          provider={
+            system?.llm.configured
+              ? system.llm.model ?? "OpenAI-compatible"
+              : "Optional · any OpenAI-compatible endpoint. Without one, CLON uses its rules planner."
+          }
           accent="#9879ff"
           state={!system ? "checking" : system.llm.configured ? "configured" : "not_configured"}
-          description="Optional. Any OpenAI-compatible endpoint works, including open-source models served by Ollama, vLLM, Together or Groq. Without one, CLON uses its deterministic rules planner."
-          scopes={["intent routing", "drafting", "summaries"]}
-          footnote={system?.llm.configured ? undefined : "Set OPENAI_MODEL (or LLM_MODEL), its API key and optional base URL — see .env.example."}
+          footnote={system?.llm.configured ? undefined : "Needs OPENAI_MODEL + key"}
         />
       </div>
 
+      <MemoryPanel />
+
       <GlassPanel className="mt-6">
-        <SectionHeader eyebrow="Roadmap" title="Planned integrations" />
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { icon: MessageSquare, name: "Slack" },
-            { icon: Mail, name: "Outlook" },
-            { icon: BookOpen, name: "Notion" },
-            { icon: FileText, name: "Google Drive" },
-            { icon: Workflow, name: "Linear / Trello" },
-            { icon: HeartPulse, name: "Strava · Garmin" },
-            { icon: HeartPulse, name: "Health Connect" },
-            { icon: HeartPulse, name: "Apple Health" },
-          ].map(({ icon: Icon, name }) => (
-            <div key={name} className="flex items-center gap-2.5 rounded-xl border border-dashed border-line px-3 py-2.5 text-[13px] text-mute">
-              <Icon className="h-4 w-4 text-faint" /> {name}
-              <span className="ml-auto font-mono text-[9px] uppercase tracking-widest text-faint">planned</span>
-            </div>
+        <SectionHeader title="Soon" eyebrow="Planned — not connected" />
+        <div className="flex flex-wrap gap-2">
+          {["Slack", "Outlook", "Notion", "Drive", "Linear", "Strava", "Health Connect", "Apple Health"].map((name) => (
+            <span key={name} className="rounded-full border border-dashed border-line px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+              {name}
+            </span>
           ))}
         </div>
-        <p className="mt-3 text-[11px] text-faint">Planned integrations are not connected and are never shown as working.</p>
       </GlassPanel>
-
-      <div className="mt-6 grid gap-5 md:grid-cols-2">
-        <GlassPanel>
-          <SectionHeader eyebrow="Security" title="How credentials are handled" />
-          <ul className="space-y-2 text-xs text-mute">
-            {[
-              "API keys and OAuth tokens live only on the server — never in the browser.",
-              "CLON requests the minimum: read events, create events, read mail, create drafts.",
-              "Live actions execute from server-signed proposals, at most once.",
-              "Turning an app off here stops every clone from using it immediately.",
-              "To fully revoke access, disconnect the account in your Composio dashboard.",
-            ].map((t) => (
-              <li key={t} className="flex gap-2">
-                <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ok" /> {t}
-              </li>
-            ))}
-          </ul>
-        </GlassPanel>
-        <GlassPanel>
-          <SectionHeader eyebrow="Built with" title="Development workflow" />
-          <div className="flex gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line bg-white/[0.03]">
-              <Code className="h-4 w-4 text-cyan" />
-            </span>
-            <p className="text-xs leading-relaxed text-mute">
-              CLON is open source and built with AI coding agents such as Cline. Those agents are part of how CLON is developed. They are not a runtime
-              integration, and CLON doesn&apos;t claim they run inside the app.
-            </p>
-          </div>
-        </GlassPanel>
-      </div>
     </div>
   );
 }

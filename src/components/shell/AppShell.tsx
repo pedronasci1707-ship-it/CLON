@@ -26,7 +26,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <TopBar />
-          <main id="main" className="flex-1 px-4 pb-28 pt-6 sm:px-6 lg:pb-12 xl:px-8">
+          <main id="main" className="flex-1 px-4 pb-28 pt-8 sm:px-6 lg:pb-14 xl:px-10">
             {children}
           </main>
         </div>
@@ -57,7 +57,7 @@ function useBootstrap() {
           s.notify({
             kind: "error",
             title: "Switched to Demo mode",
-            body: "Live integrations are not configured on this server.",
+            body: "No live apps are configured.",
             href: "/integrations",
           });
         }
@@ -92,13 +92,15 @@ function MobileNav() {
           <Link
             key={href}
             href={href}
+            aria-label={label}
+            aria-current={active ? "page" : undefined}
             className={cn(
-              "flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-[10px] transition-colors",
+              "relative grid h-11 flex-1 place-items-center rounded-xl transition-colors",
               active ? "bg-white/[0.06] text-cyan" : "text-mute",
             )}
           >
-            <Icon className="h-[18px] w-[18px]" strokeWidth={1.6} />
-            {label}
+            <Icon className="h-5 w-5" strokeWidth={1.6} />
+            {active && <span className="absolute bottom-1 h-[3px] w-[3px] rounded-full bg-cyan shadow-[0_0_6px_#5be7f5]" aria-hidden />}
           </Link>
         );
       })}
@@ -160,9 +162,9 @@ function Toast({ n, onDone }: { n: AppNotification; onDone: () => void }) {
           n.kind === "error" ? "bg-danger" : n.kind === "approval" ? "bg-cyan" : n.kind === "conflict" ? "bg-warn" : "bg-ok",
         )}
       />
-      <Link href={n.href ?? "/activity"} className="min-w-0 flex-1">
+      <Link href={n.href ?? "/activity"} className="min-w-0 flex-1" title={n.body}>
         <div className="text-sm text-ink">{n.title}</div>
-        {n.body && <div className="mt-0.5 line-clamp-2 text-xs text-mute">{n.body}</div>}
+        {n.body && <div className="mt-0.5 truncate text-xs text-mute">{n.body}</div>}
       </Link>
       <button onClick={onDone} className="text-faint hover:text-ink" aria-label="Dismiss">
         <X className="h-3.5 w-3.5" />

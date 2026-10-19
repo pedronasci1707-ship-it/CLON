@@ -14,15 +14,13 @@ export function EmptyState({
   action?: React.ReactNode;
   className?: string;
 }) {
+  // `body` is kept as a hover hint: empty states stay one icon and a few words.
   return (
-    <div className={cn("flex flex-col items-center justify-center gap-3 rounded-card border border-dashed border-line px-6 py-8 text-center", className)}>
-      <span className="grid h-10 w-10 place-items-center rounded-full border border-line bg-white/[0.03] text-mute">
+    <div title={body} className={cn("flex flex-col items-center justify-center gap-2.5 px-6 py-8 text-center", className)}>
+      <span className="grid h-10 w-10 place-items-center rounded-full border border-line bg-white/[0.02] text-faint">
         <Icon className="h-4 w-4" strokeWidth={1.6} />
       </span>
-      <div>
-        <div className="text-sm font-medium text-soft">{title}</div>
-        {body && <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-mute">{body}</p>}
-      </div>
+      <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-faint">{title}</div>
       {action}
     </div>
   );

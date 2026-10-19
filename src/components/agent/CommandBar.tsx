@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils";
 interface CommandBarProps {
   clone: CloneId;
   size?: "lg" | "md";
-  suggestions?: string[];
   onSubmitted?: () => void;
   autoFocus?: boolean;
   /** Bind ⌘K / Ctrl+K to focus this input. */
@@ -22,14 +21,14 @@ interface CommandBarProps {
   className?: string;
 }
 
-export function CommandBar({ clone, size = "md", suggestions, onSubmitted, autoFocus, hotkey, hideChips, className }: CommandBarProps) {
+export function CommandBar({ clone, size = "md", onSubmitted, autoFocus, hotkey, hideChips, className }: CommandBarProps) {
   const def = CLONES[clone];
   const [value, setValue] = useState("");
   const [focused, setFocused] = useState(false);
   const [hint, setHint] = useState(0);
   const running = useClon((s) => s.running);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const chips = suggestions ?? def.suggestions;
+  const chips = def.suggestions;
 
   useEffect(() => {
     if (focused || value) return;
@@ -119,7 +118,7 @@ export function CommandBar({ clone, size = "md", suggestions, onSubmitted, autoF
                   transition={{ duration: 0.35 }}
                   className="truncate"
                 >
-                  {busy ? `${running?.label ?? "Working"}…` : chips[hint]}
+                  {busy ? `${running?.label ?? "Working"}…` : chips[hint].prompt}
                 </motion.span>
               </AnimatePresence>
             </div>
@@ -145,15 +144,16 @@ export function CommandBar({ clone, size = "md", suggestions, onSubmitted, autoF
       </form>
 
       <div className={cn("mt-3 flex flex-wrap gap-2", lg && "justify-center", hideChips && "hidden")}>
-        {chips.slice(0, lg ? 3 : 3).map((s) => (
+        {chips.slice(0, 3).map((s) => (
           <button
-            key={s}
-            onClick={() => submit(s)}
+            key={s.label}
+            onClick={() => submit(s.prompt)}
             disabled={busy}
-            className="group inline-flex max-w-full items-center gap-1.5 rounded-full border border-line bg-white/[0.02] px-3 py-1.5 text-left text-xs text-mute transition-all hover:border-accent-soft hover:bg-accent-soft hover:text-ink disabled:opacity-40"
+            title={s.prompt}
+            className="group inline-flex items-center gap-1.5 rounded-full border border-line bg-white/[0.02] px-3 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.12em] text-mute transition-all hover:border-accent-soft hover:bg-accent-soft hover:text-ink disabled:opacity-40"
           >
             <CornerDownLeft className="h-3 w-3 shrink-0 text-faint transition-colors group-hover:text-accent" />
-            <span className="truncate">{s.length > 64 ? `${s.slice(0, 62)}…` : s}</span>
+            {s.label}
           </button>
         ))}
       </div>

@@ -30,25 +30,27 @@ export const GlassPanel = forwardRef<HTMLDivElement, GlassPanelProps>(function G
   );
 });
 
+/** HUD-style label: a lit dot and one or two words. Secondary context (eyebrow) is a tooltip, not copy. */
 export function SectionHeader({
   eyebrow,
   title,
+  count,
   action,
   className,
 }: {
   eyebrow?: string;
   title: string;
+  count?: number;
   action?: React.ReactNode;
   className?: string;
 }) {
   return (
-    <div className={cn("mb-4 flex items-end justify-between gap-3", className)}>
-      <div className="min-w-0">
-        {eyebrow && (
-          <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.22em] text-faint">{eyebrow}</div>
-        )}
-        <h2 className="truncate font-display text-[15px] font-medium tracking-tight text-ink">{title}</h2>
-      </div>
+    <div className={cn("mb-4 flex min-h-7 items-center justify-between gap-3", className)}>
+      <h2 title={eyebrow} className="flex min-w-0 items-center gap-2.5 font-mono text-[10.5px] uppercase tracking-[0.24em] text-mute">
+        <span className="h-1 w-1 shrink-0 rounded-full bg-accent shadow-[0_0_8px_var(--accent)]" aria-hidden />
+        <span className="truncate">{title}</span>
+        {!!count && <span className="text-accent">{count}</span>}
+      </h2>
       {action}
     </div>
   );

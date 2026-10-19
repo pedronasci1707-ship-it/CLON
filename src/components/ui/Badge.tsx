@@ -1,3 +1,4 @@
+import { Ban, Check, Clock, Minus, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Mode, Outcome, Risk } from "@/lib/types";
 
@@ -65,18 +66,25 @@ export function ModeBadge({ mode, className }: { mode: Mode | "sample" | "manual
   );
 }
 
-export function OutcomeBadge({ outcome }: { outcome: Outcome }) {
-  const map: Record<Outcome, { tone: Tone; label: string }> = {
-    success: { tone: "ok", label: "Done · real" },
-    simulated: { tone: "violet", label: "Simulated" },
-    error: { tone: "danger", label: "Error" },
-    blocked: { tone: "warn", label: "Blocked" },
-    pending: { tone: "cyan", label: "Awaiting you" },
-    approved: { tone: "ok", label: "Approved" },
-    rejected: { tone: "neutral", label: "Declined" },
-  };
-  const m = map[outcome];
-  return <Badge tone={m.tone}>{m.label}</Badge>;
+const OUTCOME: Record<Outcome, { icon: LucideIcon; className: string; label: string }> = {
+  success: { icon: Check, className: "text-ok", label: "Done · real" },
+  simulated: { icon: Check, className: "text-violet", label: "Simulated" },
+  error: { icon: X, className: "text-danger", label: "Error" },
+  blocked: { icon: Ban, className: "text-warn", label: "Blocked" },
+  pending: { icon: Clock, className: "text-cyan", label: "Awaiting you" },
+  approved: { icon: Check, className: "text-ok", label: "Approved" },
+  rejected: { icon: Minus, className: "text-faint", label: "Declined" },
+};
+
+/** Outcome as a single glyph; the wording lives in the tooltip and for screen readers. */
+export function OutcomeIcon({ outcome }: { outcome: Outcome }) {
+  const { icon: Icon, className, label } = OUTCOME[outcome];
+  return (
+    <span title={label} className={cn("grid h-5 w-5 shrink-0 place-items-center", className)}>
+      <Icon className="h-3.5 w-3.5" strokeWidth={2.2} aria-hidden />
+      <span className="sr-only">{label}</span>
+    </span>
+  );
 }
 
 export function RiskBadge({ risk }: { risk: Risk }) {

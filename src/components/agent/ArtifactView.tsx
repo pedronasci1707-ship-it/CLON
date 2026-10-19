@@ -23,7 +23,7 @@ import { CLONES } from "@/lib/clones";
 import { useClon } from "@/lib/store";
 import type { Artifact, CloneId } from "@/lib/types";
 import { LOCALE } from "@/lib/time";
-import { cn, EMAIL_RE } from "@/lib/utils";
+import { cn, EMAIL_RE, emailsInNotes } from "@/lib/utils";
 import { ApprovalCard } from "@/components/approvals/ApprovalCard";
 import { Badge, ModeBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -76,8 +76,8 @@ export function ArtifactView({ artifact, clone }: { artifact: Artifact; clone: C
           right={<ModeBadge mode={artifact.source === "google" ? "live" : "demo"} />}
         >
           {artifact.redactedCount ? (
-            <p className="mb-2 flex items-center gap-1.5 text-[11px] text-faint">
-              <EyeOff className="h-3 w-3" /> {artifact.redactedCount} work event(s) visible only as “Busy”
+            <p className="mb-2 flex items-center gap-1.5 font-mono text-[10px] text-faint" title="Work events visible only as “Busy”">
+              <EyeOff className="h-3 w-3" /> {artifact.redactedCount}
             </p>
           ) : null}
           <ul className="space-y-1">
@@ -109,13 +109,18 @@ export function ArtifactView({ artifact, clone }: { artifact: Artifact; clone: C
           icon={Sparkles}
           title={artifact.title}
           accent={CLONES.life.accent}
-          right={artifact.source === "parallel" ? <Badge tone="ok">Parallel · live web</Badge> : <ModeBadge mode="sample" />}
+          right={
+            artifact.source === "parallel" ? (
+              <Badge tone="ok">Live web</Badge>
+            ) : (
+              <span title="Illustrative samples — not live listings. Connect Parallel for real, sourced results.">
+                <ModeBadge mode="sample" />
+              </span>
+            )
+          }
         >
-          {artifact.source === "sample" && (
-            <p className="mb-2 text-[11px] text-warn/80">Illustrative samples — not live listings. Connect Parallel for real, sourced results.</p>
-          )}
           <div className="space-y-2">
-            {artifact.items.length === 0 && <p className="text-xs text-mute">No results matched with enough evidence.</p>}
+            {artifact.items.length === 0 && <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-faint">No verified results</p>}
             {artifact.items.map((it, i) => (
               <div
                 key={i}
@@ -150,15 +155,22 @@ export function ArtifactView({ artifact, clone }: { artifact: Artifact; clone: C
                   </div>
                   {artifact.selectedIndex === i && <Badge tone="accent">Selected</Badge>}
                 </div>
-                <p className="mt-1.5 text-xs leading-relaxed text-mute">{it.summary}</p>
-                {it.evidence && (
-                  <blockquote className="mt-1.5 border-l border-line-strong pl-2 text-[11px] italic text-faint">“{it.evidence}”</blockquote>
-                )}
+                <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-mute" title={it.summary}>
+                  {it.summary}
+                </p>
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   {artifact.source === "parallel" &&
-                    (it.dateVerified ? <Badge tone="ok">Date matched in source</Badge> : <Badge tone="warn">Date not confirmed</Badge>)}
-                  {it.fitsSchedule === true && <Badge tone="cyan">Fits your free time</Badge>}
-                  {it.fitsSchedule === false && <Badge tone="warn">Conflicts with calendar</Badge>}
+                    (it.dateVerified ? (
+                      <Badge tone="ok" title={it.evidence ? `“${it.evidence}”` : "Date matched in source"}>
+                        Date verified
+                      </Badge>
+                    ) : (
+                      <Badge tone="warn" title={it.evidence ? `“${it.evidence}”` : undefined}>
+                        Date unconfirmed
+                      </Badge>
+                    ))}
+                  {it.fitsSchedule === true && <Badge tone="cyan">Fits</Badge>}
+                  {it.fitsSchedule === false && <Badge tone="warn">Conflict</Badge>}
                   {artifact.resumeToken && artifact.selectedIndex !== i && (
                     <Button
                       size="sm"
@@ -200,11 +212,9 @@ export function ArtifactView({ artifact, clone }: { artifact: Artifact; clone: C
       const draft = (
         <div className="min-w-0 rounded-xl border border-accent-soft bg-accent-soft/40 p-3">
           <div className="mb-1.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-accent">
-            <Sparkles className="h-3 w-3" /> Draft by CLON
+            <Sparkles className="h-3 w-3" /> Draft
           </div>
-          <div className="text-[11px] text-mute">
-            To <span className="text-ink">{artifact.to}</span>
-          </div>
+          <div className="truncate text-[11px] text-ink">{artifact.to}</div>
           <div className="mt-1 text-[13px] font-medium text-ink">{artifact.subject}</div>
           <p className="mt-2 whitespace-pre-line text-xs leading-relaxed text-soft">{artifact.body}</p>
         </div>
@@ -216,13 +226,17 @@ export function ArtifactView({ artifact, clone }: { artifact: Artifact; clone: C
           accent={CLONES.communication.accent}
           right={
             status === "created" ? (
-              <Badge tone="ok">
-                <Check className="h-3 w-3" /> Saved to Gmail drafts
+              <Badge tone="ok" title={`Created via Composio${artifact.draftId ? ` · draft id ${artifact.draftId}` : ""}. Nothing was sent.`}>
+                <Check className="h-3 w-3" /> Saved · not sent
               </Badge>
             ) : status === "simulated" ? (
-              <Badge tone="violet">Simulated · not sent</Badge>
+              <Badge tone="violet" title="Demo mode: no email was created or sent.">
+                Simulated
+              </Badge>
             ) : status === "pending_approval" ? (
-              <Badge tone="cyan">Awaiting approval</Badge>
+              <Badge tone="cyan" title="Approve below to save this draft.">
+                Awaiting you
+              </Badge>
             ) : status === "blocked" ? (
               <Badge tone="warn">Not created</Badge>
             ) : (
@@ -236,33 +250,26 @@ export function ArtifactView({ artifact, clone }: { artifact: Artifact; clone: C
                 <div className="mb-1.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
                   <Reply className="h-3 w-3" /> Original
                 </div>
-                <div className="text-[11px] text-mute">
-                  From <span className="text-ink">{artifact.inReplyTo.from}</span>
-                </div>
+                <div className="truncate text-[11px] text-ink">{artifact.inReplyTo.from}</div>
                 <div className="mt-1 text-[13px] font-medium text-ink">{artifact.inReplyTo.subject}</div>
-                <p className="mt-2 line-clamp-[10] whitespace-pre-line text-xs leading-relaxed text-mute">{artifact.inReplyTo.body}</p>
+                <p className="mt-2 line-clamp-6 whitespace-pre-line text-xs leading-relaxed text-mute">{artifact.inReplyTo.body}</p>
               </div>
               {draft}
             </div>
           ) : (
             draft
           )}
-          <p className="mt-2 text-[11px] text-faint">
-            {status === "created" && (
-              <>
-                Created via Composio{artifact.draftId ? ` · draft id ${artifact.draftId}` : ""}. Nothing was sent — review it in Gmail.{" "}
-                {artifact.link && (
-                  <a href={artifact.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-accent hover:underline">
-                    Open drafts <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
-              </>
-            )}
-            {status === "simulated" && "Demo mode: no email was created or sent. Connect Gmail and switch to Live to save real drafts."}
-            {status === "pending_approval" && "Your Communication clone is set to “approval required” — approve below to save this draft."}
-            {status === "blocked" && (artifact.error ?? "The draft was not created.")}
-            {status === "failed" && <span className="text-danger">{artifact.error ?? approval?.result ?? "The connected service returned an error."}</span>}
-          </p>
+          {((status === "created" && artifact.link) || status === "blocked" || status === "failed") && (
+            <p className="mt-2 text-[11px] text-faint">
+              {status === "created" && artifact.link && (
+                <a href={artifact.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-accent hover:underline">
+                  Open drafts <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
+              {status === "blocked" && (artifact.error ?? "The draft was not created.")}
+              {status === "failed" && <span className="text-danger">{artifact.error ?? approval?.result ?? "The connected service returned an error."}</span>}
+            </p>
+          )}
         </Frame>
       );
     }
@@ -271,7 +278,7 @@ export function ArtifactView({ artifact, clone }: { artifact: Artifact; clone: C
       return (
         <Frame icon={CalendarClock} title={artifact.title}>
           <div className="flex flex-wrap gap-1.5">
-            {artifact.slots.length === 0 && <span className="text-xs text-mute">No slot fits — your day is fully booked.</span>}
+            {artifact.slots.length === 0 && <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-faint">Fully booked</span>}
             {artifact.slots.map((s, i) => (
               <span
                 key={s.start}
@@ -300,8 +307,9 @@ export function ArtifactView({ artifact, clone }: { artifact: Artifact; clone: C
               </li>
             ))}
           </ol>
-          <p className="mt-2.5 text-[11.5px] text-soft">{artifact.rationale}</p>
-          <p className="mt-1.5 text-[11px] text-faint">{artifact.safety}</p>
+          <p className="mt-2.5 text-[11.5px] text-soft" title={artifact.safety}>
+            {artifact.rationale}
+          </p>
         </Frame>
       );
 
@@ -382,7 +390,7 @@ export function ArtifactView({ artifact, clone }: { artifact: Artifact; clone: C
               <span className="text-ink">{artifact.unread}</span> unread
             </span>
             <span>
-              <span className="text-accent">{artifact.needsReply}</span> need a reply
+              <span className="text-accent">{artifact.needsReply}</span> to reply
             </span>
           </div>
           {artifact.summary && <p className="mb-2.5 text-xs leading-relaxed text-soft">{artifact.summary}</p>}
@@ -450,7 +458,7 @@ export function ArtifactView({ artifact, clone }: { artifact: Artifact; clone: C
     case "training_plan":
       return (
         <Frame icon={CalendarDays} title={artifact.title} accent={CLONES.fitness.accent}>
-          <ol className="space-y-1.5">
+          <ol className="space-y-1.5" title={artifact.safety}>
             {artifact.days.map((d, i) => (
               <li key={i} className="flex gap-3 rounded-lg border border-line bg-white/[0.015] px-2.5 py-2 text-xs">
                 <span className="w-16 shrink-0 font-mono text-[10.5px] text-accent">{d.day}</span>
@@ -461,7 +469,6 @@ export function ArtifactView({ artifact, clone }: { artifact: Artifact; clone: C
               </li>
             ))}
           </ol>
-          <p className="mt-2 text-[11px] text-faint">{artifact.safety}</p>
         </Frame>
       );
 
@@ -477,7 +484,7 @@ export function ArtifactView({ artifact, clone }: { artifact: Artifact; clone: C
           </ul>
           {artifact.related.length > 0 && (
             <div className="mt-2.5 border-t border-line pt-2">
-              <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-faint">Related context</div>
+              <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-faint">Context</div>
               {artifact.related.map((r, i) => (
                 <p key={i} className="text-[11.5px] text-mute">
                   {r}
@@ -511,6 +518,9 @@ function InputRequest({ artifact, clone }: { artifact: Extract<Artifact, { kind:
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const running = useClon((s) => s.running);
+  const memory = useClon((s) => s.memory);
+  // Addresses the user saved in "Your notes" — offered, never filled in on their behalf.
+  const known = emailsInNotes(memory.filter((m) => m.scope === "all" || m.scope === "communication")).slice(0, 6);
   return (
     <form
       className="rounded-2xl border border-accent-soft bg-accent-soft/30 p-3.5"
@@ -550,6 +560,25 @@ function InputRequest({ artifact, clone }: { artifact: Extract<Artifact, { kind:
           Continue
         </Button>
       </div>
+      {known.length > 0 && !sent && (
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">From your notes</span>
+          {known.map(({ email, note }) => (
+            <button
+              key={email}
+              type="button"
+              title={note}
+              onClick={() => {
+                setValue(email);
+                setError(null);
+              }}
+              className="rounded-md border border-line bg-white/[0.02] px-1.5 py-0.5 font-mono text-[10.5px] text-soft transition-colors hover:border-accent-soft hover:text-ink"
+            >
+              {email}
+            </button>
+          ))}
+        </div>
+      )}
       {error && <p className="mt-1.5 text-[11px] text-danger">{error}</p>}
     </form>
   );

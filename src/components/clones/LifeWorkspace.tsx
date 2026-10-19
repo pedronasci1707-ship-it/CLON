@@ -108,25 +108,21 @@ export function LifeWorkspace() {
               <MapPin className="h-3 w-3" /> Exploring
             </div>
             <h2 className="mt-2 font-display text-5xl font-medium leading-[0.95] tracking-tight text-ink sm:text-6xl">{profile.city}</h2>
-            <p className="mt-3 max-w-md text-sm leading-relaxed text-soft">
-              Your Life clone looks for experiences that fit your interests, your {profile.budget} budget and — most importantly — the time you actually have free.
-            </p>
             <div className="mt-5 flex flex-wrap gap-2">
               <Button variant="accent" size="sm" disabled={!!running} onClick={() => runCommand("life", `Find interesting AI events tonight after 6 PM in ${profile.city}`)}>
-                <Sparkles className="h-3.5 w-3.5" /> AI events tonight
+                <Sparkles className="h-3.5 w-3.5" /> AI tonight
               </Button>
               <Button variant="outline" size="sm" disabled={!!running} onClick={() => runCommand("life", "Plan something fun for Saturday evening")}>
-                Plan my Saturday
+                Saturday
               </Button>
               <Button variant="outline" size="sm" disabled={!!running} onClick={() => runCommand("life", "When am I free this week?")}>
-                When am I free?
+                Free time
               </Button>
             </div>
           </div>
           <div className="glass rounded-2xl bg-void/40 p-4">
             <div className="mb-3 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-faint">
-              <Clock className="h-3 w-3" /> Upcoming free time
-              <ModeBadge mode={cal.source === "google" ? "live" : "demo"} className="ml-auto" />
+              <Clock className="h-3 w-3" /> Free
             </div>
             <ul className="space-y-3">
               {freeTime.map((f) => (
@@ -134,7 +130,7 @@ export function LifeWorkspace() {
                   <div className="text-[13px] text-ink">{f.label}</div>
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {f.windows.length === 0 ? (
-                      <span className="text-[11.5px] text-mute">Booked</span>
+                      <span className="font-mono text-[10.5px] text-faint">—</span>
                     ) : (
                       f.windows.slice(0, 3).map((w) => (
                         <span key={w.start} className="rounded-full border border-accent-soft bg-accent-soft px-2 py-0.5 font-mono text-[10.5px] text-accent">
@@ -153,9 +149,9 @@ export function LifeWorkspace() {
       {/* Latest sourced results */}
       <GlassPanel accent={ACCENT}>
         <SectionHeader
-          eyebrow="Latest discoveries"
-          title={latest ? latest.art.title : "Ask your Life clone to search"}
-          action={latest ? latest.art.source === "parallel" ? <Badge tone="ok">Parallel · live web</Badge> : <ModeBadge mode="sample" /> : undefined}
+          title="Discoveries"
+          eyebrow={latest?.art.title}
+          action={latest ? latest.art.source === "parallel" ? <Badge tone="ok">Live web</Badge> : <ModeBadge mode="sample" /> : undefined}
         />
         {latest ? (
           <div className="grid gap-3 md:grid-cols-2">
@@ -164,28 +160,19 @@ export function LifeWorkspace() {
             ))}
           </div>
         ) : (
-          <EmptyState
-            icon={Compass}
-            title="No searches yet"
-            body="Results include source links and are checked against your free time. Without Parallel connected, CLON shows clearly labeled samples."
-          />
+          <EmptyState icon={Compass} title="No searches yet" />
         )}
       </GlassPanel>
 
       {/* Featured + samples */}
       <section>
-        <div className="mb-3 flex items-end justify-between">
-          <div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-faint">Curated for your interests</div>
-            <h2 className="font-display text-lg text-ink">Experiences worth your evening</h2>
-          </div>
-          <ModeBadge mode="sample" />
-        </div>
+        <SectionHeader title="For you" action={<ModeBadge mode="sample" />} />
         <motion.article
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="group relative mb-4 overflow-hidden rounded-[22px] border border-line"
           style={{ minHeight: 240 }}
+          title={featured.blurb}
         >
           <Cover kind={featured.kind} seed={1} className="absolute inset-0 transition-transform duration-700 group-hover:scale-[1.03]" />
           <div className="relative flex h-full min-h-[240px] flex-col justify-end bg-[linear-gradient(180deg,transparent,rgb(5_8_22/0.85))] p-6">
@@ -193,7 +180,6 @@ export function LifeWorkspace() {
               Featured · {featured.kind}
             </Badge>
             <h3 className="font-display text-3xl font-medium tracking-tight text-ink">{featured.title}</h3>
-            <p className="mt-2 max-w-xl text-sm text-soft">{featured.blurb}</p>
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] text-mute">
               <span>{featured.when}</span>
               <span>{featured.area}</span>
@@ -209,6 +195,7 @@ export function LifeWorkspace() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
               className="glass glass-rim glass-interactive group overflow-hidden rounded-[20px]"
+              title={d.blurb}
             >
               <Cover kind={d.kind} seed={i + 2} className="h-28 transition-transform duration-700 group-hover:scale-105" />
               <div className="p-4">
@@ -217,7 +204,6 @@ export function LifeWorkspace() {
                   <span className="ml-auto font-mono text-[10px] text-faint">{d.priceHint}</span>
                 </div>
                 <h3 className="mt-1 text-[15px] font-medium text-ink">{d.title}</h3>
-                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-mute">{d.blurb}</p>
                 <div className="mt-2.5 flex items-center gap-2 font-mono text-[10.5px] text-faint">
                   <MapPin className="h-3 w-3" /> {d.area} · {d.when}
                 </div>
@@ -225,9 +211,6 @@ export function LifeWorkspace() {
             </motion.article>
           ))}
         </div>
-        <p className="mt-3 text-[11px] text-faint">
-          Samples illustrate the experience and are not live listings. Real events always come with a source link.
-        </p>
       </section>
 
       <PreferencesPanel />
@@ -249,11 +232,13 @@ function ResultCard({ item, live }: { item: EventOption; live: boolean }) {
         {item.when && <span>{item.when}</span>}
         {item.venue && <span>{item.venue}</span>}
       </div>
-      <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-mute">{item.summary}</p>
+      <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-mute" title={item.summary}>
+        {item.summary}
+      </p>
       <div className="mt-2.5 flex flex-wrap gap-1.5">
-        {live && (item.dateVerified ? <Badge tone="ok">Date matched in source</Badge> : <Badge tone="warn">Date not confirmed</Badge>)}
-        {item.fitsSchedule === true && <Badge tone="cyan">Fits your free time</Badge>}
-        {item.fitsSchedule === false && <Badge tone="warn">Conflicts with calendar</Badge>}
+        {live && (item.dateVerified ? <Badge tone="ok">Date verified</Badge> : <Badge tone="warn">Date unconfirmed</Badge>)}
+        {item.fitsSchedule === true && <Badge tone="cyan">Fits</Badge>}
+        {item.fitsSchedule === false && <Badge tone="warn">Conflict</Badge>}
       </div>
     </div>
   );
@@ -267,7 +252,7 @@ function PreferencesPanel() {
 
   return (
     <GlassPanel accent={ACCENT}>
-      <SectionHeader eyebrow="Preferences" title="What your Life clone optimizes for" />
+      <SectionHeader title="Preferences" />
       <div className="grid gap-6 md:grid-cols-2">
         <div>
           <form
@@ -276,7 +261,7 @@ function PreferencesPanel() {
               if (city.trim()) update({ city: city.trim() });
             }}
           >
-            <div className="mb-1.5 text-xs font-medium text-soft">City</div>
+            <div className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-faint">City</div>
             <div className="flex gap-2">
               <input className="field" value={city} onChange={(e) => setCity(e.target.value)} aria-label="City" />
               <Button type="submit" variant="outline" disabled={city.trim() === profile.city}>
@@ -284,21 +269,20 @@ function PreferencesPanel() {
               </Button>
             </div>
           </form>
-          <p className="mt-2 text-[11px] text-faint">CLON uses the city you set here. It never reads your device location.</p>
-          <div className="mb-1.5 mt-5 text-xs font-medium text-soft">Budget</div>
+          <div className="mb-1.5 mt-5 font-mono text-[10px] uppercase tracking-[0.18em] text-faint">Budget</div>
           <Segmented<UserProfile["budget"]>
             label="Budget"
             value={profile.budget}
             onChange={(v) => update({ budget: v })}
             options={[
-              { value: "$", label: "$ · free & cheap" },
-              { value: "$$", label: "$$ · moderate" },
-              { value: "$$$", label: "$$$ · treat" },
+              { value: "$", label: "$" },
+              { value: "$$", label: "$$" },
+              { value: "$$$", label: "$$$" },
             ]}
           />
         </div>
         <div>
-          <div className="mb-1.5 text-xs font-medium text-soft">Interests</div>
+          <div className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-faint">Interests</div>
           <div className="flex flex-wrap gap-1.5">
             {profile.interests.map((i) => (
               <span key={i} className="inline-flex items-center gap-1 rounded-full border border-accent-soft bg-accent-soft py-1 pl-2.5 pr-1.5 text-xs text-ink">
@@ -322,7 +306,7 @@ function PreferencesPanel() {
               setInterest("");
             }}
           >
-            <input className="field" placeholder="Add an interest" value={interest} onChange={(e) => setInterest(e.target.value)} aria-label="New interest" />
+            <input className="field" placeholder="Add…" value={interest} onChange={(e) => setInterest(e.target.value)} aria-label="New interest" />
             <Button type="submit" variant="outline" size="icon" aria-label="Add interest" disabled={!interest.trim()}>
               <Plus className="h-4 w-4" />
             </Button>

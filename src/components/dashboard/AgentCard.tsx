@@ -5,7 +5,6 @@ import { ArrowUpRight } from "lucide-react";
 import { forwardRef, type CSSProperties } from "react";
 import { CLONES } from "@/lib/clones";
 import { spotlightHandlers } from "@/lib/hooks";
-import { timeAgo } from "@/lib/time";
 import type { SpecialistId } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { CloneSigil } from "@/components/ui/CloneSigil";
@@ -21,6 +20,7 @@ interface AgentCardProps {
 export const AgentCard = forwardRef<HTMLAnchorElement, AgentCardProps>(function AgentCard({ clone, snapshot, side = "left" }, ref) {
   const def = CLONES[clone];
   const working = snapshot?.state === "working";
+  const right = side === "right";
   return (
     <Link
       ref={ref}
@@ -31,7 +31,8 @@ export const AgentCard = forwardRef<HTMLAnchorElement, AgentCardProps>(function 
         working && "ring-accent",
       )}
       style={{ "--accent": def.accent } as CSSProperties}
-      aria-label={`${def.name} — open workspace`}
+      aria-label={`${def.name}${snapshot ? ` — ${snapshot.metric.value} ${snapshot.metric.label}` : ""}`}
+      title={def.tagline}
     >
       <div className="spotlight pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
       {working && (
@@ -40,55 +41,39 @@ export const AgentCard = forwardRef<HTMLAnchorElement, AgentCardProps>(function 
         </div>
       )}
 
-      <div className={cn("relative flex items-start gap-3.5", side === "right" && "xl:flex-row-reverse xl:text-right")}>
+      <div className={cn("relative flex items-center gap-3.5", right && "xl:flex-row-reverse xl:text-right")}>
         <CloneSigil clone={clone} active={working} />
         <div className="min-w-0 flex-1">
-          <div className={cn("flex items-center gap-2", side === "right" && "xl:flex-row-reverse")}>
-            <h3 className="truncate font-display text-[17px] font-medium tracking-tight text-ink">{def.short}</h3>
-            <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-faint">clone</span>
-            <ArrowUpRight
-              className={cn(
-                "h-4 w-4 text-accent opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100",
-                side === "right" ? "xl:mr-auto -translate-x-1" : "ml-auto -translate-x-1",
-              )}
-            />
-          </div>
-          <div className="mt-1">
-            {snapshot ? <StatusIndicator state={snapshot.state} /> : <span className="skeleton block h-3 w-20 rounded" />}
-          </div>
+          <h3 className="truncate font-display text-[17px] font-medium tracking-tight text-ink">{def.short}</h3>
+          {snapshot ? <StatusIndicator state={snapshot.state} /> : <span className="skeleton mt-1 block h-3 w-16 rounded" />}
         </div>
+        <ArrowUpRight
+          className={cn(
+            "h-4 w-4 shrink-0 text-accent opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100",
+            right ? "translate-x-1 xl:-scale-x-100" : "-translate-x-1",
+          )}
+        />
       </div>
 
-      <ul className="relative mt-4 space-y-1.5">
-        {snapshot
-          ? snapshot.insights.map((ins, i) => (
-              <li key={i} className="flex items-baseline justify-between gap-3 text-[13px]">
-                <span className="truncate text-soft/90">{ins.label}</span>
-                {ins.value && <span className="shrink-0 font-mono text-[12px] text-accent">{ins.value}</span>}
-              </li>
-            ))
-          : [0, 1, 2].map((i) => <li key={i} className="skeleton h-4 rounded" style={{ width: `${88 - i * 12}%` }} />)}
-      </ul>
-
-      <div className="relative mt-4 flex items-center gap-2 border-t border-line pt-3">
-        <span
-          className={cn(
-            "inline-flex h-[22px] items-center gap-1.5 rounded-full border px-2 font-mono text-[10px] uppercase tracking-[0.12em]",
-            snapshot && snapshot.pending > 0 ? "border-accent-soft bg-accent-soft text-accent" : "border-line text-faint",
-          )}
-        >
-          {snapshot?.pending ?? 0} pending
-        </span>
-        <span className="min-w-0 flex-1 truncate text-right text-[11px] text-mute" title={snapshot?.latest?.action}>
-          {snapshot?.latest ? (
-            <>
-              <span className="text-faint">{timeAgo(snapshot.latest.at)} · </span>
-              {snapshot.latest.action}
-            </>
-          ) : (
-            "No activity yet"
-          )}
-        </span>
+      <div className={cn("relative mt-5 flex items-end gap-3", right && "xl:flex-row-reverse")}>
+        {snapshot ? (
+          <div className={cn("min-w-0", right && "xl:text-right")}>
+            <div className="font-display text-[32px] font-medium leading-none tracking-tight text-accent [text-shadow:0_0_24px_color-mix(in_oklab,var(--accent)_45%,transparent)]">
+              {snapshot.metric.value}
+            </div>
+            <div className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-faint">{snapshot.metric.label}</div>
+          </div>
+        ) : (
+          <span className="skeleton block h-10 w-24 rounded-lg" />
+        )}
+        {!!snapshot?.pending && (
+          <span
+            className={cn("mb-0.5 grid h-6 min-w-6 place-items-center rounded-full border border-accent-soft bg-accent-soft px-1.5 font-mono text-[10px] text-accent", right ? "ml-auto xl:ml-0 xl:mr-auto" : "ml-auto")}
+            title={`${snapshot.pending} awaiting approval`}
+          >
+            {snapshot.pending}
+          </span>
+        )}
       </div>
     </Link>
   );

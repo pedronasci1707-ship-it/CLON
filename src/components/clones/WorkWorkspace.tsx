@@ -1,18 +1,17 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { Briefcase, CalendarClock, Check, ListChecks, Plus, Sparkles, Target, Trash } from "lucide-react";
+import { CalendarClock, Check, ListChecks, Plus, Sparkles, Target, Trash } from "lucide-react";
 import { useMemo, useState } from "react";
 import { runCommand } from "@/lib/agent-client";
 import { freeWindows } from "@/lib/availability";
 import { CLONES } from "@/lib/clones";
-import { useCalendar, useClock, useInbox } from "@/lib/hooks";
+import { useCalendar, useClock } from "@/lib/hooks";
 import { useClon } from "@/lib/store";
-import { atLocal, LOCALE, timeAgo } from "@/lib/time";
+import { atLocal, LOCALE } from "@/lib/time";
 import type { WorkTask } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { AgentWorkspace } from "@/components/agent/AgentWorkspace";
-import { Badge, ModeBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { StatCard } from "@/components/ui/Controls";
 import { GlassPanel, SectionHeader } from "@/components/ui/GlassPanel";
@@ -30,7 +29,6 @@ export function WorkWorkspace() {
   const profile = useClon((s) => s.profile);
   const running = useClon((s) => s.running);
   const cal = useCalendar("work", 0, 2);
-  const inbox = useInbox();
 
   const tasks = useMemo(
     () =>
@@ -70,33 +68,37 @@ export function WorkWorkspace() {
     return [...map.entries()];
   }, [tasks]);
 
-  const workEmails = inbox.emails.filter((e) => e.category === "work" && !e.flagged).slice(0, 4);
-
   return (
     <AgentWorkspace
       clone="work"
       summary={
         <>
-          <StatCard accent={ACCENT} label="Open tasks" value={open.length} hint={`${tasks.length - open.length} completed`} />
-          <StatCard accent={ACCENT} label="Top priority" value={<span className="text-accent">{open.filter((t) => t.priority === "p0").length}</span>} hint="P0 items open" />
-          <StatCard accent={ACCENT} label="Meetings ahead" value={meetings.length} hint={meetings[0] ? `Next: ${tf(meetings[0].start)}` : "None scheduled"} />
-          <StatCard accent={ACCENT} label="Focus left today" value={`${Math.floor(focusMinutesToday / 60)}h ${focusMinutesToday % 60}m`} hint="Free time within work hours" />
+          <StatCard accent={ACCENT} label="Open tasks" value={open.length} />
+          <StatCard accent={ACCENT} label="P0" value={<span className="text-accent">{open.filter((t) => t.priority === "p0").length}</span>} />
+          <StatCard accent={ACCENT} label="Meetings" value={meetings.length} />
+          <StatCard accent={ACCENT} label="Focus left" value={`${Math.floor(focusMinutesToday / 60)}h ${focusMinutesToday % 60}m`} />
         </>
       }
     >
       <GlassPanel accent={ACCENT}>
         <SectionHeader
-          eyebrow="Today's priorities"
-          title="Ranked by priority and deadline"
+          title="Priorities"
           action={
-            <Button size="sm" variant="ghost" disabled={!!running} onClick={() => runCommand("work", "What are my top priorities tomorrow?")}>
-              <Sparkles className="h-3.5 w-3.5" /> Re-rank with clone
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label="Re-rank with clone"
+              title="Re-rank with clone"
+              disabled={!!running}
+              onClick={() => runCommand("work", "What are my top priorities tomorrow?")}
+            >
+              <Sparkles className="h-4 w-4 text-accent" />
             </Button>
           }
         />
         <AddTask />
         {tasks.length === 0 ? (
-          <EmptyState icon={ListChecks} title="No tasks yet" body="Add what's on your plate — your Work clone will rank it and find focus time." className="mt-3" />
+          <EmptyState icon={ListChecks} title="No tasks yet" className="mt-3" />
         ) : (
           <ul className="mt-3 space-y-1.5">
             <AnimatePresence initial={false}>
@@ -110,23 +112,27 @@ export function WorkWorkspace() {
 
       <div className="grid gap-5 lg:grid-cols-2">
         <GlassPanel accent={ACCENT}>
-          <SectionHeader eyebrow="Shared calendar" title="Upcoming meetings" action={<ModeBadge mode={cal.source === "google" ? "live" : "demo"} />} />
+          <SectionHeader title="Meetings" />
           {meetings.length === 0 ? (
             <EmptyState icon={CalendarClock} title="No meetings ahead" />
           ) : (
             <ul className="space-y-2">
               {meetings.map((m) => (
-                <li key={m.id} className="flex items-center gap-3 rounded-xl border border-line bg-white/[0.015] px-3 py-2.5">
+                <li key={m.id} className="flex items-center gap-3 rounded-xl px-2 py-1.5" title={m.location}>
                   <div className="w-16 shrink-0">
                     <div className="font-mono text-[11px] text-ink">{tf(m.start)}</div>
                     <div className="font-mono text-[10px] text-faint">{df(m.start).split(",")[0]}</div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[13px] text-ink">{m.title}</div>
-                    {m.location && <div className="truncate text-[11px] text-mute">{m.location}</div>}
-                  </div>
-                  <Button size="sm" variant="ghost" disabled={!!running} onClick={() => runCommand("work", `Brief me for my meeting: ${m.title}`)}>
-                    Brief me
+                  <div className="min-w-0 flex-1 truncate text-[13px] text-ink">{m.title}</div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label={`Brief me for ${m.title}`}
+                    title="Brief me"
+                    disabled={!!running}
+                    onClick={() => runCommand("work", `Brief me for my meeting: ${m.title}`)}
+                  >
+                    <Sparkles className="h-4 w-4 text-accent" />
                   </Button>
                 </li>
               ))}
@@ -135,27 +141,18 @@ export function WorkWorkspace() {
         </GlassPanel>
 
         <GlassPanel accent={ACCENT}>
-          <SectionHeader eyebrow="Recommendations" title="Protect focus time" />
+          <SectionHeader title="Focus" />
           {focus.length === 0 ? (
-            <EmptyState icon={Target} title="No focus windows" body="Your work hours are fully booked for the next two days." />
+            <EmptyState icon={Target} title="Fully booked" />
           ) : (
             <ul className="space-y-2">
               {focus.map((f) => (
-                <li key={f.start} className="rounded-xl border border-dashed border-accent-soft px-3 py-2.5">
+                <li key={f.start} className="rounded-xl border border-dashed border-accent-soft px-3 py-2">
                   <div className="flex items-center gap-2 font-mono text-[11px] text-accent">
                     {df(f.start).split(",")[0]} · {tf(f.start)}–{tf(f.end)}
-                    <span className="ml-auto text-faint">{Math.round(f.minutes / 6) / 10}h free</span>
+                    <span className="ml-auto text-faint">{Math.round(f.minutes / 6) / 10}h</span>
                   </div>
-                  <div className="mt-1 text-[12.5px] text-soft">
-                    {f.task ? (
-                      <>
-                        Block for <span className="text-ink">{f.task.title}</span>
-                        {f.task.estimateMin ? ` (~${f.task.estimateMin} min)` : ""}
-                      </>
-                    ) : (
-                      "Deep work or catch-up"
-                    )}
-                  </div>
+                  <div className="mt-0.5 truncate text-[12.5px] text-soft">{f.task ? f.task.title : "Deep work"}</div>
                 </li>
               ))}
             </ul>
@@ -165,21 +162,24 @@ export function WorkWorkspace() {
             size="sm"
             className="mt-3 w-full"
             disabled={!!running || focus.length === 0}
+            title="Needs your approval"
             onClick={() => runCommand("work", "Find focus time for my top priorities and propose calendar blocks")}
           >
-            <CalendarClock className="h-3.5 w-3.5" /> Propose focus blocks (needs approval)
+            <CalendarClock className="h-3.5 w-3.5" /> Propose blocks
           </Button>
         </GlassPanel>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <GlassPanel accent={ACCENT}>
-          <SectionHeader eyebrow="Active projects" title="Progress by project" />
-          <ul className="space-y-3">
+      <GlassPanel accent={ACCENT}>
+        <SectionHeader title="Projects" />
+        {projects.length === 0 ? (
+          <EmptyState icon={ListChecks} title="No projects yet" />
+        ) : (
+          <ul className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
             {projects.map(([name, p]) => (
               <li key={name}>
                 <div className="flex items-baseline justify-between text-[13px]">
-                  <span className="text-ink">{name}</span>
+                  <span className="truncate text-ink">{name}</span>
                   <span className="font-mono text-[11px] text-mute">
                     {p.done}/{p.total}
                   </span>
@@ -194,30 +194,9 @@ export function WorkWorkspace() {
                 </div>
               </li>
             ))}
-            {projects.length === 0 && <li className="text-xs text-mute">Projects appear as you add tasks.</li>}
           </ul>
-        </GlassPanel>
-
-        <GlassPanel accent={ACCENT}>
-          <SectionHeader eyebrow="Professional communications" title="Work threads" action={<ModeBadge mode={inbox.source === "gmail" ? "live" : "demo"} />} />
-          {workEmails.length === 0 ? (
-            <EmptyState icon={Briefcase} title="No work email" />
-          ) : (
-            <ul className="space-y-2">
-              {workEmails.map((e) => (
-                <li key={e.id} className="rounded-xl border border-line bg-white/[0.015] px-3 py-2">
-                  <div className="flex items-center gap-2 text-[12.5px]">
-                    <span className="truncate text-ink">{e.from.name}</span>
-                    {e.needsReply && <Badge tone="accent">Reply</Badge>}
-                    <span className="ml-auto shrink-0 font-mono text-[10px] text-faint">{timeAgo(e.receivedAt)}</span>
-                  </div>
-                  <div className="truncate text-[12px] text-mute">{e.subject}</div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </GlassPanel>
-      </div>
+        )}
+      </GlassPanel>
     </AgentWorkspace>
   );
 }
@@ -232,7 +211,7 @@ function TaskRow({ task }: { task: WorkTask }) {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -10 }}
-      className={cn("group flex items-center gap-3 rounded-xl border border-line bg-white/[0.015] px-3 py-2.5", done && "opacity-50")}
+      className={cn("group flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/[0.02]", done && "opacity-50")}
     >
       <button
         onClick={() => toggle(task.id)}
@@ -247,15 +226,13 @@ function TaskRow({ task }: { task: WorkTask }) {
       <span className={cn("shrink-0 font-mono text-[10px] uppercase", task.priority === "p0" ? "text-danger" : task.priority === "p1" ? "text-warn" : "text-mute")}>
         {task.priority}
       </span>
-      <div className="min-w-0 flex-1">
-        <div className={cn("truncate text-[13px] text-ink", done && "line-through")}>{task.title}</div>
-        <div className="truncate text-[11px] text-mute">
-          {task.project}
-          {task.due ? ` · due ${df(task.due)}` : ""}
-          {task.estimateMin ? ` · ~${task.estimateMin} min` : ""}
-        </div>
+      <div
+        className={cn("min-w-0 flex-1 truncate text-[13px] text-ink", done && "line-through")}
+        title={[task.project, task.due && `due ${df(task.due)}`, task.estimateMin && `~${task.estimateMin} min`, task.demo ? "demo" : "yours"].filter(Boolean).join(" · ")}
+      >
+        {task.title}
       </div>
-      {task.demo ? <ModeBadge mode="demo" /> : <ModeBadge mode="manual" />}
+      <span className="hidden shrink-0 font-mono text-[10px] text-faint sm:inline">{task.project}</span>
       <button
         onClick={() => remove(task.id)}
         className="text-faint opacity-0 transition-opacity hover:text-danger focus:opacity-100 group-hover:opacity-100"

@@ -10,6 +10,7 @@ import type {
   CloneId,
   ClonePermissions,
   EmailMessage,
+  MemoryNote,
   Mode,
   Permissions,
   SpecialistId,
@@ -39,6 +40,10 @@ export const DEFAULT_PERMISSIONS: Permissions = {
   fitness: { enabled: true, autonomy: "approval", calendar: "propose" },
 };
 
+/** Upper bounds so notes stay a small, readable context for every run. */
+export const MEMORY_LIMIT = 100;
+export const MEMORY_MAX_CHARS = 1_000;
+
 export interface DraftRecord {
   emailId: string;
   to: string;
@@ -66,6 +71,7 @@ interface ClonState {
   emails: EmailMessage[];
   tasks: WorkTask[];
   workouts: Workout[];
+  memory: MemoryNote[];
   activity: ActivityEntry[];
   approvals: ApprovalRequest[];
   notifications: AppNotification[];
@@ -85,6 +91,8 @@ interface ClonState {
   removeTask: (id: string) => void;
   logWorkout: (w: Omit<Workout, "id" | "source">) => void;
   removeWorkout: (id: string) => void;
+  addMemory: (text: string, scope: MemoryNote["scope"]) => void;
+  removeMemory: (id: string) => void;
   markEmailRead: (id: string) => void;
   recordActivity: (e: Omit<ActivityEntry, "id" | "at">) => void;
   clearActivity: () => void;
@@ -124,6 +132,7 @@ export const useClon = create<ClonState>()(
       emails: [],
       tasks: [],
       workouts: [],
+      memory: [],
       activity: [],
       approvals: [],
       notifications: [],
@@ -185,6 +194,10 @@ export const useClon = create<ClonState>()(
       logWorkout: (w) =>
         set((s) => ({ workouts: [{ ...w, id: uid("wo"), source: "manual" }, ...s.workouts] })),
       removeWorkout: (id) => set((s) => ({ workouts: s.workouts.filter((w) => w.id !== id) })),
+
+      addMemory: (text, scope) =>
+        set((s) => ({ memory: [{ id: uid("mem"), text, scope, createdAt: now() }, ...s.memory].slice(0, MEMORY_LIMIT) })),
+      removeMemory: (id) => set((s) => ({ memory: s.memory.filter((m) => m.id !== id) })),
 
       markEmailRead: (id) =>
         set((s) => ({ emails: s.emails.map((e) => (e.id === id ? { ...e, unread: false } : e)) })),

@@ -22,7 +22,7 @@ export function StatusIndicator({
   const s = styles[state];
   const animated = state === "working" || state === "attention";
   return (
-    <span className={cn("inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.16em]", s.text, className)}>
+    <span title={s.label} className={cn("inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.16em]", s.text, className)}>
       <span className="relative flex h-2 w-2">
         {animated && <span className={cn("absolute inset-0 animate-ping rounded-full opacity-60", s.dot)} />}
         <span className={cn("relative h-2 w-2 rounded-full", s.dot)} />

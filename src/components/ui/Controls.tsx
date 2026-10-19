@@ -89,34 +89,30 @@ export function Segmented<T extends string>({
 export function StatCard({
   label,
   value,
-  hint,
   accent,
   className,
 }: {
   label: string;
   value: React.ReactNode;
-  hint?: React.ReactNode;
   accent?: string;
   className?: string;
 }) {
   return (
     <div
-      className={cn("glass glass-rim rounded-card px-4 py-3.5", className)}
+      className={cn("glass glass-rim rounded-card px-4 py-4", className)}
       style={accent ? ({ "--accent": accent } as CSSProperties) : undefined}
     >
-      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">{label}</div>
-      <div className="mt-1.5 font-display text-2xl font-medium tracking-tight text-ink">{value}</div>
-      {hint && <div className="mt-0.5 truncate text-[11.5px] text-mute">{hint}</div>}
+      <div className="font-display text-[28px] font-medium leading-none tracking-tight text-ink">{value}</div>
+      <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.2em] text-faint">{label}</div>
     </div>
   );
 }
 
-export function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+export function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs font-medium text-soft">{label}</span>
+      <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.18em] text-faint">{label}</span>
       {children}
-      {hint && <span className="mt-1 block text-[11px] text-faint">{hint}</span>}
     </label>
   );
 }

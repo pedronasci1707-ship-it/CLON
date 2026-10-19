@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { CalendarClock, Dumbbell, Flame, HeartPulse, Plus, Sparkles, Trash } from "lucide-react";
+import { CalendarClock, Dumbbell, Flame, Plus, Sparkles, Trash } from "lucide-react";
 import { useMemo, useState } from "react";
 import { runCommand } from "@/lib/agent-client";
 import { CLONES } from "@/lib/clones";
@@ -11,7 +11,7 @@ import { atLocal, DAY, LOCALE, type Clock } from "@/lib/time";
 import type { UserProfile, Workout, WorkoutType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { AgentWorkspace } from "@/components/agent/AgentWorkspace";
-import { Badge, ModeBadge } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Segmented, StatCard, Switch } from "@/components/ui/Controls";
 import { GlassPanel, SectionHeader } from "@/components/ui/GlassPanel";
@@ -42,7 +42,7 @@ function stats(workouts: Workout[], clock: Clock) {
   };
 }
 
-function Ring({ value, goal, label, sub }: { value: number; goal: number; label: string; sub: string }) {
+function Ring({ value, goal, label }: { value: number; goal: number; label: string }) {
   const pct = goal ? Math.min(1, value / goal) : 0;
   const r = 34;
   const c = 2 * Math.PI * r;
@@ -70,8 +70,7 @@ function Ring({ value, goal, label, sub }: { value: number; goal: number; label:
           {value}
           <span className="text-sm text-faint"> / {goal}</span>
         </div>
-        <div className="text-xs text-soft">{label}</div>
-        <div className="text-[11px] text-faint">{sub}</div>
+        <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-faint">{label}</div>
       </div>
     </div>
   );
@@ -119,54 +118,51 @@ export function FitnessWorkspace() {
   return (
     <AgentWorkspace
       clone="fitness"
-      consoleTitle="Your AI coach"
+      consoleTitle="Coach"
       summary={
         <>
-          <StatCard accent={ACCENT} label="Sessions · 7 days" value={s ? <span className="text-accent">{s.sessions}</span> : "—"} hint={`Goal ${profile.weeklySessionGoal} per week`} />
-          <StatCard accent={ACCENT} label="Active minutes" value={s?.minutes ?? "—"} hint={`Goal ${profile.weeklyMinutesGoal} per week`} />
-          <StatCard accent={ACCENT} label="Consistency" value={s ? `${Math.round((s.activeDays / 7) * 100)}%` : "—"} hint={s ? `${s.activeDays} of 7 days active` : ""} />
-          <StatCard accent={ACCENT} label="Streak" value={s ? `${s.streak}d` : "—"} hint="Consecutive active days" />
+          <StatCard accent={ACCENT} label="Sessions · 7d" value={s ? <span className="text-accent">{s.sessions}</span> : "—"} />
+          <StatCard accent={ACCENT} label="Minutes · 7d" value={s?.minutes ?? "—"} />
+          <StatCard accent={ACCENT} label="Consistency" value={s ? `${Math.round((s.activeDays / 7) * 100)}%` : "—"} />
+          <StatCard accent={ACCENT} label="Streak" value={s ? `${s.streak}d` : "—"} />
         </>
       }
     >
       <GlassPanel accent={ACCENT}>
         <SectionHeader
-          eyebrow="Weekly activity"
-          title="Active minutes · last 14 days"
+          title="14 days"
+          eyebrow="Active minutes"
           action={
             mode === "demo" ? (
-              <label className="flex items-center gap-2 text-xs text-mute">
-                Include demo data <Switch checked={showDemo} onChange={setShowDemo} label="Include demo data" accent={ACCENT} />
+              <label className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.16em] text-faint" title="Include seeded demo workouts">
+                Demo <Switch checked={showDemo} onChange={setShowDemo} label="Include demo data" accent={ACCENT} />
               </label>
             ) : (
-              <Badge tone="cyan">Your logs only</Badge>
+              <Badge tone="cyan">Yours</Badge>
             )
           }
         />
         <FitnessChart data={chartData} showDemo={includeDemo} />
-        <p className="mt-2 text-[11px] text-faint">
-          Demo statistics are seeded examples. “Your logs” are workouts you logged on this device. No health platform is connected.
-        </p>
       </GlassPanel>
 
       <div className="grid gap-5 lg:grid-cols-2">
         <GlassPanel accent={ACCENT}>
-          <SectionHeader eyebrow="Personal objectives" title="This week's goals" />
+          <SectionHeader title="Goals" />
           <div className="space-y-5">
-            <Ring value={s?.sessions ?? 0} goal={profile.weeklySessionGoal} label="sessions" sub="rolling 7 days" />
-            <Ring value={s?.minutes ?? 0} goal={profile.weeklyMinutesGoal} label="active minutes" sub="rolling 7 days" />
+            <Ring value={s?.sessions ?? 0} goal={profile.weeklySessionGoal} label="sessions" />
+            <Ring value={s?.minutes ?? 0} goal={profile.weeklyMinutesGoal} label="minutes" />
           </div>
           <GoalsEditor />
         </GlassPanel>
 
         <GlassPanel accent={ACCENT}>
-          <SectionHeader eyebrow="Calendar-aware" title="Training schedule" action={<ModeBadge mode={cal.source === "google" ? "live" : "demo"} />} />
+          <SectionHeader title="Schedule" />
           {upcoming.length === 0 ? (
-            <EmptyState icon={CalendarClock} title="No training scheduled" body="Your coach finds slots that don't collide with meetings — and asks before adding anything." />
+            <EmptyState icon={CalendarClock} title="Nothing scheduled" />
           ) : (
             <ul className="space-y-2">
               {upcoming.map((e) => (
-                <li key={e.id} className="flex items-center gap-3 rounded-xl border border-line bg-white/[0.015] px-3 py-2.5">
+                <li key={e.id} className="flex items-center gap-3 rounded-xl px-2 py-1.5">
                   <Dumbbell className="h-4 w-4 shrink-0 text-accent" />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[13px] text-ink">{e.title}</div>
@@ -174,17 +170,21 @@ export function FitnessWorkspace() {
                       {df(e.start)} · {tf(e.start)}–{tf(e.end)}
                     </div>
                   </div>
-                  {e.source === "clon" && <Badge tone="cyan">Added by CLON</Badge>}
+                  {e.source === "clon" && (
+                    <span title="Added by CLON">
+                      <Sparkles className="h-3.5 w-3.5 text-cyan" />
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
           )}
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             <Button variant="accent" size="sm" disabled={!!running} onClick={() => runCommand("fitness", "Find a free 45-minute workout slot tomorrow")}>
-              <Sparkles className="h-3.5 w-3.5" /> 45-min slot tomorrow
+              <Sparkles className="h-3.5 w-3.5" /> 45-min slot
             </Button>
             <Button variant="outline" size="sm" disabled={!!running} onClick={() => runCommand("fitness", "Organize three gym sessions this week without conflicting with my meetings")}>
-              Plan 3 sessions this week
+              3 sessions
             </Button>
           </div>
         </GlassPanel>
@@ -192,14 +192,14 @@ export function FitnessWorkspace() {
 
       <div className="grid gap-5 lg:grid-cols-2">
         <GlassPanel accent={ACCENT}>
-          <SectionHeader eyebrow="Manual logging" title="Log a workout" />
+          <SectionHeader title="Log" />
           <LogWorkout />
         </GlassPanel>
 
         <GlassPanel accent={ACCENT}>
-          <SectionHeader eyebrow="Training history" title="Recent workouts" />
+          <SectionHeader title="History" />
           {recent.length === 0 ? (
-            <EmptyState icon={Flame} title="No workouts yet" body="Log your first session — it stays on this device." />
+            <EmptyState icon={Flame} title="No workouts yet" />
           ) : (
             <ul className="space-y-1.5">
               <AnimatePresence initial={false}>
@@ -210,7 +210,8 @@ export function FitnessWorkspace() {
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -10 }}
-                    className="group flex items-center gap-3 rounded-xl border border-line bg-white/[0.015] px-3 py-2"
+                    className="group flex items-center gap-3 rounded-xl px-2 py-1.5"
+                    title={w.source === "manual" ? "Logged by you" : "Demo"}
                   >
                     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent-soft font-mono text-[10px] uppercase text-accent">
                       {w.type.slice(0, 3)}
@@ -218,10 +219,9 @@ export function FitnessWorkspace() {
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[13px] text-ink">{w.title}</div>
                       <div className="font-mono text-[10.5px] text-faint">
-                        {df(w.date)} · {w.durationMin} min · {w.intensity}
+                        {df(w.date)} · {w.durationMin} min
                       </div>
                     </div>
-                    <ModeBadge mode={w.source === "manual" ? "manual" : "demo"} />
                     {w.source === "manual" && (
                       <button
                         onClick={() => removeWorkout(w.id)}
@@ -238,21 +238,6 @@ export function FitnessWorkspace() {
           )}
         </GlassPanel>
       </div>
-
-      <GlassPanel accent={ACCENT}>
-        <SectionHeader eyebrow="Integrations" title="Health platforms" />
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {["Apple Health", "Google Health Connect", "Strava", "Garmin", "Fitbit"].map((n) => (
-            <div key={n} className="flex items-center gap-2.5 rounded-xl border border-dashed border-line px-3 py-2.5 text-[13px] text-mute">
-              <HeartPulse className="h-4 w-4 text-faint" /> {n}
-              <Badge className="ml-auto">Planned</Badge>
-            </div>
-          ))}
-        </div>
-        <p className="mt-3 text-[11px] text-faint">
-          None of these are connected. CLON&apos;s fitness guidance is general and is not medical advice.
-        </p>
-      </GlassPanel>
     </AgentWorkspace>
   );
 }

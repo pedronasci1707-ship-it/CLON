@@ -38,6 +38,15 @@ export interface UserProfile {
   weeklyMinutesGoal: number;
 }
 
+/** Something the user told CLON to remember. Kept on this device and sent with every run. */
+export interface MemoryNote {
+  id: string;
+  text: string;
+  /** "all" = every clone may use it. */
+  scope: "all" | SpecialistId;
+  createdAt: string;
+}
+
 export type EventCategory = "work" | "personal" | "fitness" | "social";
 
 export interface CalendarEvent {

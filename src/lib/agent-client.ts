@@ -23,6 +23,8 @@ export function buildContext() {
     profile: s.profile,
     permissions: s.permissions,
     disabledIntegrations: s.disabledIntegrations,
+    // Facts the user typed in "Your notes" — theirs in both modes.
+    memory: s.memory,
     data: {
       // In Live mode, calendar and email come from connected accounts — never from demo seeds.
       calendar: demo ? s.calendar : [],

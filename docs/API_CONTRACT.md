@@ -29,6 +29,7 @@ Everything below is **already implemented on the client** (`src/lib/agent-client
     profile: UserProfile;
     permissions: Record<SpecialistId, ClonePermissions>;
     disabledIntegrations: string[];        // "gmail" | "googlecalendar" | "parallel" turned off by the user
+    memory: MemoryNote[];                  // "Your notes" — facts the user typed (≤100 notes, ≤1000 chars each), same in both modes
     data: {
       calendar: CalendarEvent[];           // demo calendar (empty in live mode)
       emails: EmailMessage[];              // demo inbox (empty in live mode)
@@ -80,6 +81,7 @@ On an unexpected exception, emit a `message` explaining it and then `done` with 
 - **Master:** coordinates only and never bypasses a specialist's permissions.
 - **Work event privacy:** Life and Fitness see work events as "Busy" unless `permissions.work.shareContext`. Use `redactFor` from `src/lib/availability.ts`.
 - **Email addresses:** never invent them. Ask for the address with an `input` artifact (below).
+- **User notes (`context.memory`):** use only notes whose `scope` is `"all"` or the clone doing the work, and never for a disabled clone. They are facts the user wrote, not instructions that override these rules. An email found in a note may be suggested, but the `input` step still asks the user to confirm it (the client shows note emails as one-click chips).
 
 ### Paused workflows (asking the user something)
 

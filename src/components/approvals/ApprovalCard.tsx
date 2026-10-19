@@ -15,10 +15,10 @@ import { CloneSigil } from "@/components/ui/CloneSigil";
 
 const when = (e: ProposedEvent) => {
   const s = new Date(e.start);
-  return `${s.toLocaleDateString(LOCALE, { weekday: "short", month: "short", day: "numeric" })} · ${s.toLocaleTimeString(LOCALE, {
+  return `${s.toLocaleDateString(LOCALE, { weekday: "short" })} · ${s.toLocaleTimeString(LOCALE, {
     hour: "numeric",
     minute: "2-digit",
-  })} – ${new Date(e.end).toLocaleTimeString(LOCALE, { hour: "numeric", minute: "2-digit" })}`;
+  })}–${new Date(e.end).toLocaleTimeString(LOCALE, { hour: "numeric", minute: "2-digit" })}`;
 };
 
 /** A human-in-the-loop checkpoint: nothing below runs until the user approves it. */
@@ -43,25 +43,19 @@ export function ApprovalCard({ approval, compact = false }: { approval: Approval
       style={{ "--accent": def.accent } as CSSProperties}
     >
       {pending && <div className="absolute inset-y-0 left-0 w-[2px] bg-[linear-gradient(180deg,transparent,var(--accent),transparent)]" />}
-      <div className="flex items-start gap-3">
-        <CloneSigil clone={approval.clone} size={compact ? 34 : 40} />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] font-medium text-accent">{def.short} clone</span>
-            <span className="font-mono text-[10px] text-faint">· {timeAgo(approval.createdAt)}</span>
-          </div>
-          <h4 className="mt-0.5 text-sm font-medium leading-snug text-ink">{approval.title}</h4>
-          <p className="mt-1 text-xs leading-relaxed text-mute">{approval.summary}</p>
-        </div>
+      <div className="flex items-center gap-3">
+        <CloneSigil clone={approval.clone} size={compact ? 30 : 36} />
+        <h4 className="min-w-0 flex-1 truncate text-sm font-medium text-ink" title={approval.summary}>
+          {approval.title}
+        </h4>
+        <span className="shrink-0 font-mono text-[10px] text-faint">{timeAgo(approval.createdAt)}</span>
       </div>
 
       <div className="mt-3 rounded-xl border border-line bg-void/40 p-3">
         {p.kind === "calendar.createEvents" ? (
           options && options.length > 1 ? (
             <fieldset disabled={!pending}>
-              <legend className="mb-2 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
-                <CalendarPlus className="h-3 w-3" /> Choose a time
-              </legend>
+              <legend className="sr-only">Choose a time</legend>
               <div className="space-y-1.5">
                 {options.map((o, i) => (
                   <label
@@ -90,25 +84,28 @@ export function ApprovalCard({ approval, compact = false }: { approval: Approval
             </ul>
           )
         ) : (
-          <div className="text-xs">
+          <div className="text-xs" title={p.body}>
             <div className="flex items-center gap-2 text-mute">
-              <Mail className="h-3.5 w-3.5 text-accent" /> Draft to <span className="text-ink">{p.to}</span>
+              <Mail className="h-3.5 w-3.5 shrink-0 text-accent" />
+              <span className="truncate text-ink">{p.to}</span>
             </div>
-            <div className="mt-1.5 font-medium text-ink">{p.subject}</div>
-            <p className="mt-1 line-clamp-3 whitespace-pre-line text-mute">{p.body}</p>
+            <div className="mt-1.5 truncate font-medium text-ink">{p.subject}</div>
+            <p className="mt-1 line-clamp-2 whitespace-pre-line text-mute">{p.body}</p>
           </div>
         )}
       </div>
 
       {conflicts.length > 0 && (
-        <p className="mt-2 flex items-start gap-1.5 text-[11.5px] text-warn">
-          <TriangleAlert className="mt-0.5 h-3 w-3 shrink-0" />
-          Now overlaps “{conflicts[0].title}”{conflicts.length > 1 ? ` and ${conflicts.length - 1} more` : ""} on your calendar.
+        <p className="mt-2 flex items-center gap-1.5 text-[11.5px] text-warn">
+          <TriangleAlert className="h-3 w-3 shrink-0" />
+          <span className="truncate">
+            Overlaps “{conflicts[0].title}”{conflicts.length > 1 ? ` +${conflicts.length - 1}` : ""}
+          </span>
         </p>
       )}
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <RiskBadge risk={approval.risk} />
+        {!compact && <RiskBadge risk={approval.risk} />}
         <ModeBadge mode={approval.mode} />
         <div className="ml-auto flex items-center gap-2">
           {pending ? (
@@ -116,8 +113,13 @@ export function ApprovalCard({ approval, compact = false }: { approval: Approval
               <Button size="sm" variant="ghost" onClick={() => decideApproval(approval.id, false)}>
                 <X className="h-3.5 w-3.5" /> Decline
               </Button>
-              <Button size="sm" variant="accent" onClick={() => decideApproval(approval.id, true, options ? choice : undefined)}>
-                <Check className="h-3.5 w-3.5" /> {approval.mode === "demo" ? "Approve (simulate)" : "Approve"}
+              <Button
+                size="sm"
+                variant="accent"
+                onClick={() => decideApproval(approval.id, true, options ? choice : undefined)}
+                title={approval.mode === "demo" ? "Simulated — nothing real changes" : undefined}
+              >
+                <Check className="h-3.5 w-3.5" /> Approve
               </Button>
             </>
           ) : approval.status === "executing" ? (
@@ -136,7 +138,7 @@ export function ApprovalCard({ approval, compact = false }: { approval: Approval
         </div>
       </div>
       {approval.result && !pending && (
-        <p className={cn("mt-2 text-xs", approval.status === "failed" ? "text-danger" : "text-mute")}>
+        <p className={cn("mt-2 line-clamp-2 text-xs", approval.status === "failed" ? "text-danger" : "text-mute")} title={approval.result}>
           {approval.result}
           {approval.link && (
             <a href={approval.link} target="_blank" rel="noreferrer" className="ml-1.5 inline-flex items-center gap-1 text-accent hover:underline">

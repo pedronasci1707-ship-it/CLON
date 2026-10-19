@@ -7,7 +7,7 @@ import { CLONES } from "@/lib/clones";
 import { useClon } from "@/lib/store";
 import type { CloneId, ThreadMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Badge, ModeBadge } from "@/components/ui/Badge";
+import { ModeBadge } from "@/components/ui/Badge";
 import { CloneSigil } from "@/components/ui/CloneSigil";
 import { ArtifactView } from "./ArtifactView";
 import { CommandBar } from "./CommandBar";
@@ -19,10 +19,9 @@ interface AgentConsoleProps {
   /** Height-constrained scrolling thread (for sidebars and sheets). */
   scroll?: boolean;
   showComposer?: boolean;
-  emptyTitle?: string;
 }
 
-export function AgentConsole({ clone, className, scroll = true, showComposer = true, emptyTitle }: AgentConsoleProps) {
+export function AgentConsole({ clone, className, scroll = true, showComposer = true }: AgentConsoleProps) {
   const def = CLONES[clone];
   const thread = useClon((s) => s.threads[clone]);
   const clearThread = useClon((s) => s.clearThread);
@@ -39,12 +38,8 @@ export function AgentConsole({ clone, className, scroll = true, showComposer = t
     <div className={cn("@container flex min-h-0 flex-col", className)} style={{ "--accent": def.accent } as CSSProperties}>
       <div className={cn("min-h-0 flex-1 space-y-5", scroll && "overflow-y-auto pr-1")}>
         {hydrated && thread.length === 0 && (
-          <div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
-            <CloneSigil clone={clone} size={52} />
-            <div>
-              <div className="font-display text-base text-ink">{emptyTitle ?? `Talk to your ${def.short} clone`}</div>
-              <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-mute">{def.mission}</p>
-            </div>
+          <div className="grid h-full min-h-40 place-items-center" title={def.mission}>
+            <CloneSigil clone={clone} size={56} />
           </div>
         )}
         {thread.map((m) => (m.role === "user" ? <UserBubble key={m.id} m={m} /> : <AssistantBlock key={m.id} m={m} clone={clone} />))}
@@ -52,14 +47,16 @@ export function AgentConsole({ clone, className, scroll = true, showComposer = t
       </div>
 
       {showComposer && (
-        <div className="mt-4 shrink-0">
+        <div className="mt-4 flex shrink-0 flex-col">
           <CommandBar clone={clone} hideChips={thread.length > 0} />
           {thread.length > 0 && !running && (
             <button
               onClick={() => clearThread(clone)}
-              className="mt-2 inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-faint hover:text-mute"
+              className="mt-1.5 grid h-7 w-7 place-items-center self-end rounded-lg text-faint transition-colors hover:bg-white/5 hover:text-mute"
+              aria-label="Clear conversation"
+              title="Clear conversation"
             >
-              <RotateCcw className="h-3 w-3" /> Clear conversation
+              <RotateCcw className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
@@ -96,10 +93,12 @@ function AssistantBlock({ m, clone }: { m: ThreadMessage; clone: CloneId }) {
           )}
           <span className="ml-auto flex items-center gap-1.5">
             {m.planner && (
-              <Badge title={m.planner === "llm" ? "Intent parsed by your configured model" : "Intent parsed by the deterministic rules planner"}>
-                {m.planner === "llm" ? <Sparkles className="h-2.5 w-2.5" /> : <Cpu className="h-2.5 w-2.5" />}
-                {m.planner === "llm" ? "model" : "rules"}
-              </Badge>
+              <span
+                className="text-faint"
+                title={m.planner === "llm" ? "Intent parsed by your configured model" : "Intent parsed by the deterministic rules planner"}
+              >
+                {m.planner === "llm" ? <Sparkles className="h-3 w-3" /> : <Cpu className="h-3 w-3" />}
+              </span>
             )}
             {m.mode && <ModeBadge mode={m.mode} />}
           </span>
@@ -117,14 +116,11 @@ function AssistantBlock({ m, clone }: { m: ThreadMessage; clone: CloneId }) {
           <p className={cn("whitespace-pre-line text-[13.5px] leading-relaxed", m.status === "error" ? "text-danger" : "text-soft")}>{m.text}</p>
         )}
         {m.status === "running" && !m.steps?.length && (
-          <div className="flex items-center gap-2 text-xs text-mute">
-            <span className="flex gap-1">
-              {[0, 1, 2].map((i) => (
-                <span key={i} className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-accent" style={{ animationDelay: `${i * 0.18}s` }} />
-              ))}
-            </span>
-            Interpreting your request…
-          </div>
+          <span className="flex gap-1" role="status" aria-label="Interpreting your request">
+            {[0, 1, 2].map((i) => (
+              <span key={i} className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-accent" style={{ animationDelay: `${i * 0.18}s` }} />
+            ))}
+          </span>
         )}
       </div>
     </motion.div>

@@ -26,15 +26,11 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-[1100px]">
-      <PageHeader
-        eyebrow="Your rules"
-        title="Settings"
-        description="Preferences shape how your clones work for you. Permissions decide what they're allowed to do — the Master Clone can never exceed them."
-      />
+      <PageHeader title="Settings" />
 
       <div className="space-y-5">
         <GlassPanel>
-          <SectionHeader eyebrow="Profile" title="About you" />
+          <SectionHeader title="Profile" />
           <form
             className="grid gap-4 md:grid-cols-2"
             onSubmit={(e) => {
@@ -45,7 +41,7 @@ export default function SettingsPage() {
             <Field label="Name">
               <input className="field" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
             </Field>
-            <Field label="City" hint="Used for local discoveries. CLON never reads your device location.">
+            <Field label="City">
               <input className="field" value={draft.city} onChange={(e) => setDraft({ ...draft, city: e.target.value })} />
             </Field>
             <Field label="Workday starts">
@@ -66,7 +62,8 @@ export default function SettingsPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Writing style">
+            <div>
+              <div className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-faint">Writing style</div>
               <Segmented<UserProfile["commStyle"]>
                 label="Writing style"
                 value={draft.commStyle}
@@ -77,17 +74,18 @@ export default function SettingsPage() {
                   { value: "formal", label: "Formal" },
                 ]}
               />
-            </Field>
-            <Field label="Interests" hint="Comma separated">
+            </div>
+            <Field label="Interests">
               <input
                 className="field"
+                placeholder="music, AI, hiking"
                 value={draft.interests.join(", ")}
                 onChange={(e) => setDraft({ ...draft, interests: e.target.value.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 12) })}
               />
             </Field>
             <div className="flex items-center gap-2 md:col-span-2">
               <Button type="submit" variant="primary" size="sm" disabled={!dirty}>
-                Save profile
+                Save
               </Button>
               {dirty && (
                 <Button type="button" variant="ghost" size="sm" onClick={() => setDraft(profile)}>
@@ -113,7 +111,7 @@ function PermissionsPanel() {
 
   return (
     <GlassPanel id="permissions">
-      <SectionHeader eyebrow="Permissions" title="What each clone may do" />
+      <SectionHeader title="Permissions" eyebrow="Calendar changes always require approval. Sending email is never automated." />
       <div className="space-y-3">
         {SPECIALISTS.map((id) => {
           const def = CLONES[id];
@@ -121,20 +119,17 @@ function PermissionsPanel() {
           return (
             <div
               key={id}
-              className="grid gap-3 rounded-2xl border border-line bg-white/[0.015] p-4 md:grid-cols-[minmax(180px,1fr)_auto_auto_auto] md:items-center"
+              className="grid gap-3 rounded-2xl border border-line bg-white/[0.015] p-4 md:grid-cols-[minmax(160px,1fr)_auto_auto_auto] md:items-center"
               style={{ "--accent": def.accent } as CSSProperties}
             >
               <div className="flex items-center gap-3">
                 <CloneSigil clone={id} size={36} />
-                <div>
-                  <div className="text-[14px] text-ink">{def.short}</div>
-                  <div className="text-[11px] text-faint">{p.enabled ? "Active" : "Paused"}</div>
-                </div>
+                <div className="text-[14px] text-ink">{def.short}</div>
               </div>
-              <label className="text-xs text-mute">
-                Autonomy
+              <label>
+                <span className="sr-only">Autonomy</span>
                 <select
-                  className="field mt-1 min-w-[170px]"
+                  className="field min-w-[170px]"
                   value={p.autonomy}
                   onChange={(e) => {
                     setPermission(id, { autonomy: e.target.value as Autonomy });
@@ -148,10 +143,10 @@ function PermissionsPanel() {
                   ))}
                 </select>
               </label>
-              <label className="text-xs text-mute">
-                Calendar
+              <label>
+                <span className="sr-only">Calendar</span>
                 <select
-                  className="field mt-1 min-w-[200px]"
+                  className="field min-w-[200px]"
                   value={p.calendar}
                   onChange={(e) => setPermission(id, { calendar: e.target.value as CalendarAccess })}
                 >
@@ -162,8 +157,7 @@ function PermissionsPanel() {
                   ))}
                 </select>
               </label>
-              <div className="flex items-center gap-2 text-xs text-mute md:justify-end">
-                Enabled
+              <div className="flex items-center md:justify-end">
                 <Switch
                   checked={p.enabled}
                   onChange={(v) => {
@@ -182,16 +176,13 @@ function PermissionsPanel() {
                     label="Share work event titles with other clones"
                     accent={def.accent}
                   />
-                  Share work event titles with Life and Fitness clones. When off, they only see “Busy”.
+                  <span title="When off, Life and Fitness only see “Busy”.">Share work titles</span>
                 </label>
               )}
             </div>
           );
         })}
       </div>
-      <p className="mt-4 text-[11px] text-faint">
-        Calendar changes always require approval, whatever the autonomy level. Sending email is never automated.
-      </p>
     </GlassPanel>
   );
 }
@@ -220,13 +211,13 @@ function DataPanel() {
 
   return (
     <GlassPanel>
-      <SectionHeader eyebrow="Your data" title="Stored on this device" />
-      <p className="mb-4 max-w-2xl text-xs leading-relaxed text-mute">
-        Profile, permissions, tasks, logged workouts, conversations and the activity log are kept in this browser. Connected-account tokens never reach it.
-      </p>
+      <SectionHeader
+        title="Data"
+        eyebrow="Profile, permissions, tasks, logged workouts, your notes, conversations and the activity log are kept in this browser. Connected-account tokens never reach it."
+      />
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" size="sm" onClick={exportAll}>
-          <Download className="h-3.5 w-3.5" /> Export my data
+          <Download className="h-3.5 w-3.5" /> Export
         </Button>
         {confirm ? (
           <>
@@ -247,7 +238,7 @@ function DataPanel() {
           </>
         ) : (
           <Button variant="ghost" size="sm" onClick={() => setConfirm(true)}>
-            <RotateCcw className="h-3.5 w-3.5" /> Reset demo world
+            <RotateCcw className="h-3.5 w-3.5" /> Reset demo
           </Button>
         )}
       </div>
