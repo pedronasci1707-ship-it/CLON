@@ -250,6 +250,7 @@ export type Artifact =
       draftId?: string;
       link?: string;
       error?: string;
+      approvalId?: string;
       inReplyTo?: { from: string; subject: string; body: string; emailId: string };
     }
   | { kind: "slots"; id: string; title: string; slots: TimeSlot[]; durationMin: number }

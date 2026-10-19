@@ -1,0 +1,260 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "motion/react";
+import { Bell, CalendarDays, Globe, Mail, ShieldCheck } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useClock, usePendingApprovals } from "@/lib/hooks";
+import { useClon } from "@/lib/store";
+import { LOCALE, timeAgo } from "@/lib/time";
+import type { Mode } from "@/lib/types";
+import { cn, initials } from "@/lib/utils";
+import { LogoMark } from "./Logo";
+
+function greeting(hour: number) {
+  if (hour < 5) return "Working late";
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+export function TopBar() {
+  const clock = useClock(15_000);
+  const profile = useClon((s) => s.profile);
+  const hydrated = useClon((s) => s.hydrated);
+  const firstName = profile.name.split(" ")[0];
+  const now = clock ? new Date(clock.now) : null;
+
+  return (
+    <header className="sticky top-0 z-20 border-b border-line bg-void/55 backdrop-blur-xl">
+      <div className="flex h-16 items-center gap-3 px-4 sm:px-6 xl:px-8">
+        <Link href="/" className="lg:hidden" aria-label="CLON home">
+          <LogoMark className="h-7 w-7" />
+        </Link>
+
+        <div className="min-w-0">
+          <div className="truncate font-display text-[15px] tracking-tight text-ink sm:text-base">
+            {now && hydrated ? `${greeting(now.getHours())}, ${firstName}` : " "}
+          </div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint" suppressHydrationWarning>
+            {now
+              ? `${now.toLocaleDateString(LOCALE, { weekday: "short", day: "2-digit", month: "short" })} · ${now.toLocaleTimeString(LOCALE, { hour: "numeric", minute: "2-digit" })}`
+              : " "}
+          </div>
+        </div>
+
+        <SystemPill />
+
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+          <ModeSwitch />
+          <AppsIndicator />
+          <Notifications />
+          <Link
+            href="/settings"
+            className="hidden h-9 w-9 place-items-center rounded-xl bg-[linear-gradient(135deg,#5be7f533,#9879ff33)] font-display text-xs font-semibold ring-1 ring-white/10 sm:grid"
+            aria-label="Profile and settings"
+          >
+            {initials(profile.name)}
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function SystemPill() {
+  const running = useClon((s) => s.running);
+  const permissions = useClon((s) => s.permissions);
+  const system = useClon((s) => s.system);
+  const hydrated = useClon((s) => s.hydrated);
+  const online = Object.values(permissions).filter((p) => p.enabled).length;
+
+  return (
+    <div className="ml-4 hidden items-center gap-3 rounded-full border border-line bg-white/[0.02] py-1.5 pl-3 pr-4 font-mono text-[10px] uppercase tracking-[0.16em] text-mute xl:flex">
+      <span className="relative flex h-2 w-2">
+        <span className={cn("absolute inset-0 animate-ping rounded-full opacity-60", running ? "bg-cyan" : "bg-ok")} />
+        <span className={cn("relative h-2 w-2 rounded-full", running ? "bg-cyan" : "bg-ok")} />
+      </span>
+      <span className={running ? "text-cyan" : "text-soft"}>{running ? "Orchestrating" : "System nominal"}</span>
+      <span className="text-faint">·</span>
+      <span>{hydrated ? `${online}/4 clones online` : "—"}</span>
+      <span className="text-faint">·</span>
+      <span title="How CLON interprets commands">
+        {system?.llm.configured ? `LLM · ${system.llm.model}` : "Rules planner"}
+      </span>
+    </div>
+  );
+}
+
+function ModeSwitch() {
+  const mode = useClon((s) => s.mode);
+  const setMode = useClon((s) => s.setMode);
+  const system = useClon((s) => s.system);
+  const notify = useClon((s) => s.notify);
+  const hydrated = useClon((s) => s.hydrated);
+  const router = useRouter();
+
+  const choose = (m: Mode) => {
+    if (m === "live" && !system?.liveAvailable) {
+      notify({
+        kind: "error",
+        title: "Live mode needs a connection",
+        body: "Add your Composio API key and connect Google Calendar or Gmail to run real actions.",
+        href: "/integrations",
+      });
+      router.push("/integrations");
+      return;
+    }
+    setMode(m);
+  };
+
+  return (
+    <div className="flex h-9 items-center rounded-xl border border-line bg-white/[0.02] p-0.5 font-mono text-[10px] uppercase tracking-[0.14em]" role="radiogroup" aria-label="Data mode">
+      {(["demo", "live"] as Mode[]).map((m) => {
+        const active = hydrated && mode === m;
+        return (
+          <button
+            key={m}
+            role="radio"
+            aria-checked={active}
+            onClick={() => choose(m)}
+            className={cn("relative h-full rounded-[9px] px-2.5 transition-colors sm:px-3", active ? "text-ink" : "text-faint hover:text-mute")}
+          >
+            {active && (
+              <motion.span
+                layoutId="mode-pill"
+                className={cn("absolute inset-0 rounded-[9px] border", m === "live" ? "border-ok/30 bg-ok/10" : "border-violet/30 bg-violet/10")}
+                transition={{ type: "spring", stiffness: 420, damping: 34 }}
+              />
+            )}
+            <span className="relative">{m}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function AppsIndicator() {
+  const system = useClon((s) => s.system);
+  const apps = [
+    { key: "googlecalendar", icon: CalendarDays, label: "Google Calendar", state: system?.composio.accounts.googlecalendar },
+    { key: "gmail", icon: Mail, label: "Gmail", state: system?.composio.accounts.gmail },
+    { key: "parallel", icon: Globe, label: "Parallel", state: system?.parallel.configured ? "connected" : "not_connected" },
+  ];
+  return (
+    <Link
+      href="/integrations"
+      className="hidden h-9 items-center gap-2.5 rounded-xl border border-line bg-white/[0.02] px-3 transition-colors hover:border-line-strong md:flex"
+      aria-label="Connected apps"
+    >
+      {apps.map(({ key, icon: Icon, label, state }) => (
+        <span key={key} className="relative" title={`${label}: ${state === "connected" ? "connected" : "not connected"}`}>
+          <Icon className="h-4 w-4 text-mute" strokeWidth={1.6} />
+          <span
+            className={cn(
+              "absolute -right-0.5 -bottom-0.5 h-1.5 w-1.5 rounded-full ring-2 ring-void",
+              state === "connected" ? "bg-ok" : state === "error" ? "bg-danger" : "bg-faint",
+            )}
+          />
+        </span>
+      ))}
+    </Link>
+  );
+}
+
+function Notifications() {
+  const notifications = useClon((s) => s.notifications);
+  const markRead = useClon((s) => s.markNotificationsRead);
+  const pending = usePendingApprovals().length;
+  const hydrated = useClon((s) => s.hydrated);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const unread = notifications.filter((n) => !n.read).length;
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const badge = hydrated ? unread + pending : 0;
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => {
+          setOpen((o) => !o);
+          if (!open) markRead();
+        }}
+        className="relative grid h-9 w-9 place-items-center rounded-xl border border-line bg-white/[0.02] text-mute transition-colors hover:border-line-strong hover:text-ink"
+        aria-label={`Notifications${badge ? ` (${badge})` : ""}`}
+        aria-expanded={open}
+      >
+        <Bell className="h-4 w-4" strokeWidth={1.6} />
+        {badge > 0 && (
+          <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-cyan px-1 font-mono text-[9px] font-semibold text-void shadow-[0_0_12px_#5be7f5]">
+            {badge}
+          </span>
+        )}
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.2 }}
+            className="glass absolute right-0 top-11 z-50 w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-2xl bg-panel/90"
+          >
+            {pending > 0 && (
+              <Link
+                href="/approvals"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 border-b border-line bg-cyan/[0.06] px-4 py-3 text-sm text-ink hover:bg-cyan/[0.1]"
+              >
+                <ShieldCheck className="h-4 w-4 text-cyan" />
+                {pending} action{pending > 1 ? "s" : ""} awaiting your approval
+              </Link>
+            )}
+            <div className="max-h-80 overflow-y-auto">
+              {notifications.length === 0 ? (
+                <div className="px-4 py-8 text-center text-xs text-mute">No notifications yet.</div>
+              ) : (
+                notifications.slice(0, 12).map((n) => (
+                  <Link
+                    key={n.id}
+                    href={n.href ?? "/activity"}
+                    onClick={() => setOpen(false)}
+                    className="block border-b border-line/60 px-4 py-3 last:border-0 hover:bg-white/[0.03]"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "h-1.5 w-1.5 shrink-0 rounded-full",
+                          n.kind === "error" ? "bg-danger" : n.kind === "approval" ? "bg-cyan" : n.kind === "conflict" ? "bg-warn" : "bg-ok",
+                        )}
+                      />
+                      <span className="truncate text-sm text-ink">{n.title}</span>
+                      <span className="ml-auto shrink-0 font-mono text-[10px] text-faint">{timeAgo(n.at)}</span>
+                    </div>
+                    {n.body && <p className="mt-1 line-clamp-2 pl-3.5 text-xs text-mute">{n.body}</p>}
+                  </Link>
+                ))
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

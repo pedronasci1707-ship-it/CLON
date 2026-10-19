@@ -96,6 +96,12 @@
   }
 }
 
+/* Per-element accent: components set --accent inline, utilities like
+   bg-accent / border-accent / bg-accent/20 resolve it where they're used. */
+@theme inline {
+  --color-accent: var(--accent);
+}
+
 /* ──────────────────────────────────────────────────────────────
    Base
    ────────────────────────────────────────────────────────────── */
@@ -124,10 +130,12 @@ body {
   color: #fff;
 }
 
-:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 80%, white);
-  outline-offset: 2px;
-  border-radius: 8px;
+@layer base {
+  :focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--accent) 80%, white);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
 }
 
 * {
@@ -170,155 +178,159 @@ body {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 
-/* ──────────────────────────────────────────────────────────────
-   Glass materials
-   ────────────────────────────────────────────────────────────── */
-.glass {
-  position: relative;
-  background:
-    linear-gradient(180deg, rgb(29 43 69 / 0.42), rgb(16 25 43 / 0.32)),
-    radial-gradient(120% 80% at 0% 0%, color-mix(in oklab, var(--accent) 5%, transparent), transparent 60%);
-  border: 1px solid var(--color-line);
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.045),
-    0 24px 60px -30px rgb(0 0 0 / 0.7);
-}
+/* Component classes live in the components layer so Tailwind utilities
+   (fixed, absolute, padding…) can always override them. */
+@layer components {
+  /* ──────────────────────────────────────────────────────────────
+     Glass materials
+     ────────────────────────────────────────────────────────────── */
+  .glass {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgb(29 43 69 / 0.42), rgb(16 25 43 / 0.32)),
+      radial-gradient(120% 80% at 0% 0%, color-mix(in oklab, var(--accent) 5%, transparent), transparent 60%);
+    border: 1px solid var(--color-line);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.045),
+      0 24px 60px -30px rgb(0 0 0 / 0.7);
+  }
 
-/* Hairline gradient rim — gives panels a lit top edge */
-.glass-rim::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    160deg,
-    color-mix(in oklab, var(--accent) 38%, transparent),
-    transparent 32%,
-    transparent 68%,
-    rgb(152 121 255 / 0.18)
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  opacity: 0.55;
-  transition: opacity 0.4s var(--ease-out-expo);
-}
+  /* Hairline gradient rim — gives panels a lit top edge */
+  .glass-rim::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      160deg,
+      color-mix(in oklab, var(--accent) 38%, transparent),
+      transparent 32%,
+      transparent 68%,
+      rgb(152 121 255 / 0.18)
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.55;
+    transition: opacity 0.4s var(--ease-out-expo);
+  }
 
-.glass-interactive {
-  transition:
-    transform 0.45s var(--ease-out-expo),
-    border-color 0.45s var(--ease-out-expo),
-    box-shadow 0.45s var(--ease-out-expo);
-}
-.glass-interactive:hover {
-  border-color: color-mix(in oklab, var(--accent) 34%, transparent);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.06),
-    0 0 0 1px color-mix(in oklab, var(--accent) 10%, transparent),
-    0 30px 70px -30px color-mix(in oklab, var(--accent) 35%, transparent);
-}
-.glass-interactive:hover.glass-rim::before {
-  opacity: 1;
-}
+  .glass-interactive {
+    transition:
+      transform 0.45s var(--ease-out-expo),
+      border-color 0.45s var(--ease-out-expo),
+      box-shadow 0.45s var(--ease-out-expo);
+  }
+  .glass-interactive:hover {
+    border-color: color-mix(in oklab, var(--accent) 34%, transparent);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.06),
+      0 0 0 1px color-mix(in oklab, var(--accent) 10%, transparent),
+      0 30px 70px -30px color-mix(in oklab, var(--accent) 35%, transparent);
+  }
+  .glass-interactive:hover.glass-rim::before {
+    opacity: 1;
+  }
 
-/* Cursor-following light used by interactive cards */
-.spotlight {
-  background: radial-gradient(
-    22rem 22rem at var(--mx, 50%) var(--my, 0%),
-    color-mix(in oklab, var(--accent) 11%, transparent),
-    transparent 60%
-  );
-}
+  /* Cursor-following light used by interactive cards */
+  .spotlight {
+    background: radial-gradient(
+      22rem 22rem at var(--mx, 50%) var(--my, 0%),
+      color-mix(in oklab, var(--accent) 11%, transparent),
+      transparent 60%
+    );
+  }
 
-/* Accent helpers driven by the --accent custom property */
-.text-accent {
-  color: var(--accent);
-}
-.bg-accent-soft {
-  background: color-mix(in oklab, var(--accent) 12%, transparent);
-}
-.border-accent-soft {
-  border-color: color-mix(in oklab, var(--accent) 30%, transparent);
-}
-.glow-accent {
-  box-shadow: 0 0 24px -4px color-mix(in oklab, var(--accent) 70%, transparent);
-}
-.ring-accent {
-  box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 45%, transparent);
-}
+  /* Accent helpers driven by the --accent custom property */
+  .text-accent {
+    color: var(--accent);
+  }
+  .bg-accent-soft {
+    background: color-mix(in oklab, var(--accent) 12%, transparent);
+  }
+  .border-accent-soft {
+    border-color: color-mix(in oklab, var(--accent) 30%, transparent);
+  }
+  .glow-accent {
+    box-shadow: 0 0 24px -4px color-mix(in oklab, var(--accent) 70%, transparent);
+  }
+  .ring-accent {
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 45%, transparent);
+  }
 
-.text-gradient {
-  background: linear-gradient(100deg, #eaf6ff 10%, #9ff3fb 45%, #b7a6ff 90%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
+  .text-gradient {
+    background: linear-gradient(100deg, #eaf6ff 10%, #9ff3fb 45%, #b7a6ff 90%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
 
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    rgb(133 147 179 / 0.06) 0%,
-    rgb(133 147 179 / 0.14) 50%,
-    rgb(133 147 179 / 0.06) 100%
-  );
-  background-size: 200% 100%;
-  animation: var(--animate-shimmer);
-}
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      rgb(133 147 179 / 0.06) 0%,
+      rgb(133 147 179 / 0.14) 50%,
+      rgb(133 147 179 / 0.06) 100%
+    );
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+  }
 
-.scanlines {
-  background-image: repeating-linear-gradient(
-    to bottom,
-    rgb(91 231 245 / 0.05) 0px,
-    rgb(91 231 245 / 0.05) 1px,
-    transparent 1px,
-    transparent 3px
-  );
-}
+  .scanlines {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      rgb(91 231 245 / 0.05) 0px,
+      rgb(91 231 245 / 0.05) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  }
 
-.no-scrollbar {
-  scrollbar-width: none;
-}
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 
-/* Form controls share one look */
-.field {
-  width: 100%;
-  border-radius: 12px;
-  border: 1px solid var(--color-line);
-  background: rgb(5 8 22 / 0.55);
-  padding: 0.6rem 0.8rem;
-  font-size: 0.875rem;
-  color: var(--color-ink);
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
-}
-.field::placeholder {
-  color: var(--color-faint);
-}
-.field:focus {
-  outline: none;
-  border-color: color-mix(in oklab, var(--accent) 55%, transparent);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 14%, transparent);
-}
-select.field {
-  appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, #8593b3 50%),
-    linear-gradient(135deg, #8593b3 50%, transparent 50%);
-  background-position:
-    calc(100% - 16px) 55%,
-    calc(100% - 11px) 55%;
-  background-size: 5px 5px;
-  background-repeat: no-repeat;
-  padding-right: 2rem;
+  /* Form controls share one look */
+  .field {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--color-line);
+    background: rgb(5 8 22 / 0.55);
+    padding: 0.6rem 0.8rem;
+    font-size: 0.875rem;
+    color: var(--color-ink);
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s;
+  }
+  .field::placeholder {
+    color: var(--color-faint);
+  }
+  .field:focus {
+    outline: none;
+    border-color: color-mix(in oklab, var(--accent) 55%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 14%, transparent);
+  }
+  select.field {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, #8593b3 50%),
+      linear-gradient(135deg, #8593b3 50%, transparent 50%);
+    background-position:
+      calc(100% - 16px) 55%,
+      calc(100% - 11px) 55%;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 2rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

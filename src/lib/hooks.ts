@@ -5,6 +5,7 @@ import { useClon } from "./store";
 import type { CalendarEvent, CloneId, EmailMessage } from "./types";
 import { atLocal, browserClock, type Clock } from "./time";
 import { eventsInRange, redactFor } from "./availability";
+import { errorMessage } from "./agent-client";
 
 export function useHydrated() {
   return useClon((s) => s.hydrated);
@@ -68,8 +69,8 @@ export function useCalendar(viewer: CloneId, fromDay = -1, toDay = 7): CalendarV
     setLive((l) => ({ ...l, loading: true, error: null }));
     fetch(`/api/calendar/events?${params}`, { signal: ctrl.signal })
       .then(async (r) => {
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.error ?? "Calendar unavailable");
+        const data = await r.json().catch(() => null);
+        if (!r.ok) throw new Error(errorMessage(data, "Calendar unavailable"));
         setLive({ events: data.events, error: null, loading: false, redacted: data.redacted ?? 0 });
       })
       .catch((e: Error) => {
@@ -111,8 +112,8 @@ export function useInbox(): InboxView {
     setLive((l) => ({ ...l, loading: true, error: null }));
     fetch("/api/mail/inbox", { signal: ctrl.signal })
       .then(async (r) => {
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.error ?? "Inbox unavailable");
+        const data = await r.json().catch(() => null);
+        if (!r.ok) throw new Error(errorMessage(data, "Inbox unavailable"));
         setLive({ emails: data.emails, error: null, loading: false });
       })
       .catch((e: Error) => {

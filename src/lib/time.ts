@@ -1,6 +1,9 @@
 // Timezone-aware helpers that work identically in the browser and on the server.
 // `tzOffset` follows Date#getTimezoneOffset(): minutes *behind* UTC (PDT = 420).
 
+/** The UI is written in English, so dates and times are formatted consistently in en-US. */
+export const LOCALE = "en-US";
+
 const MIN = 60_000;
 export const HOUR = 60 * MIN;
 export const DAY = 24 * HOUR;
@@ -105,5 +108,5 @@ export function timeAgo(iso: string, now = Date.now()) {
 }
 
 export function hhmm(iso: string) {
-  return new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString(LOCALE, { hour: "numeric", minute: "2-digit" });
 }

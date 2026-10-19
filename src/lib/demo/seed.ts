@@ -11,7 +11,8 @@ import type {
   WorkTask,
   Workout,
 } from "../types";
-import { atLocal, type Clock } from "../time";
+import { suggestTimeSlots } from "../availability";
+import { atLocal, localHour, localWeekday, LOCALE, type Clock } from "../time";
 
 export const DEMO_PROFILE: UserProfile = {
   name: "Alex Morgan",
@@ -326,4 +327,45 @@ export function seedApprovals(clock: Clock): ApprovalRequest[] {
       },
     },
   ];
+}
+
+/** A demo reply to Maya's meeting request, proposing slots that are really free in the demo calendar. */
+export function seedReplyDraft(clock: Clock, calendar: CalendarEvent[]) {
+  const today = localWeekday(clock.now, clock.tzOffset);
+  const days = [4, 5].map((wd) => ((wd - today + 7) % 7) || 7); // next Thursday and Friday
+  const slots = days.flatMap((d) =>
+    suggestTimeSlots({
+      events: calendar,
+      from: atLocal(clock, d, 13),
+      to: atLocal(clock, d, 17, 30),
+      durationMin: 30,
+      preferHour: 14,
+      localHourOf: (ms) => localHour(ms, clock.tzOffset),
+      limit: 2,
+    }),
+  );
+  const line = (iso: string) => {
+    const d = new Date(iso);
+    return `• ${d.toLocaleDateString(LOCALE, { weekday: "short", month: "short", day: "numeric" })} · ${d.toLocaleTimeString(LOCALE, { hour: "numeric", minute: "2-digit" })}`;
+  };
+  return {
+    emailId: "demo_mail_1",
+    to: "maya.chen@northwind.example",
+    subject: "Re: Follow-up: seed round timeline",
+    body: [
+      "Hi Maya,",
+      "",
+      "Thanks — great conversation today. Happy to walk through the data room and the hiring plan. These 30-minute windows are open on my calendar:",
+      "",
+      ...slots.slice(0, 3).map((s) => line(s.start)),
+      "",
+      "Let me know what works and I'll send an invite.",
+      "",
+      "Best,",
+      "Alex",
+    ].join("\n"),
+    status: "simulated" as const,
+    mode: "demo" as const,
+    at: new Date(clock.now - 30 * 60_000).toISOString(),
+  };
 }

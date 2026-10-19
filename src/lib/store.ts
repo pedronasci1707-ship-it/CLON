@@ -25,6 +25,7 @@ import {
   seedApprovals,
   seedCalendar,
   seedEmails,
+  seedReplyDraft,
   seedTasks,
   seedWorkouts,
 } from "./demo/seed";
@@ -136,20 +137,29 @@ export const useClon = create<ClonState>()(
         const s = get();
         // Re-seed when forced, on first run, or when the demo world has gone stale (> 20h old).
         const stale = s.seededAt ? Date.now() - Date.parse(s.seededAt) > 20 * 3_600_000 : true;
-        if (!force && !stale) return;
+        if (!force && !stale) {
+          // Backfill the demo reply draft for worlds seeded before it existed.
+          if (!s.drafts.demo_mail_1 && s.emails.some((e) => e.id === "demo_mail_1")) {
+            const d = seedReplyDraft(browserClock(), s.calendar);
+            set({ drafts: { ...s.drafts, [d.emailId]: d } });
+          }
+          return;
+        }
         const clock = browserClock();
         const keepUserTasks = s.tasks.filter((t) => !t.demo);
         const keepManual = s.workouts.filter((w) => w.source === "manual");
         const keepClonEvents = force ? [] : s.calendar.filter((e) => e.source === "clon" && Date.parse(e.end) > clock.now);
+        const calendar = [...seedCalendar(clock), ...keepClonEvents];
+        const demoDraft = seedReplyDraft(clock, calendar);
         set({
           seededAt: now(),
-          calendar: [...seedCalendar(clock), ...keepClonEvents],
+          calendar,
           emails: seedEmails(clock),
           tasks: [...seedTasks(clock), ...(force ? [] : keepUserTasks)],
           workouts: [...seedWorkouts(clock), ...(force ? [] : keepManual)],
           activity: force || s.activity.length === 0 ? seedActivity(clock) : s.activity,
           approvals: force || s.approvals.length === 0 ? seedApprovals(clock) : s.approvals,
-          drafts: force ? {} : s.drafts,
+          drafts: force ? { [demoDraft.emailId]: demoDraft } : { [demoDraft.emailId]: demoDraft, ...s.drafts },
           threads: force ? emptyThreads() : s.threads,
           notifications: force ? [] : s.notifications,
           profile: force ? DEMO_PROFILE : s.profile,
