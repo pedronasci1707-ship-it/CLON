@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Apresentação de 3 minutos do projeto CLON." />
+  <title>CLON — Apresentação</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #050816;
+      --panel: #111a35;
+      --cyan: #5be7f5;
+      --violet: #9879ff;
+      --text: #f7faff;
+      --muted: #aab8d2;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 82% 14%, rgba(152, 121, 255, .15), transparent 28rem),
+        radial-gradient(circle at 12% 86%, rgba(91, 231, 245, .10), transparent 24rem),
+        var(--bg);
+    }
+    main { width: min(1160px, calc(100% - 32px)); margin: 0 auto; padding: 56px 0 48px; }
+    .eyebrow { margin: 0 0 16px; color: var(--cyan); font-size: 12px; font-weight: 700; letter-spacing: .15em; }
+    h1 { max-width: 850px; margin: 0; font: 700 clamp(40px, 6vw, 72px)/1.02 Georgia, serif; }
+    .intro { max-width: 760px; margin: 24px 0 30px; color: var(--muted); font-size: 18px; line-height: 1.6; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 36px; }
+    .button {
+      display: inline-flex; align-items: center; justify-content: center; min-height: 48px;
+      padding: 0 20px; border: 1px solid rgba(91, 231, 245, .48); border-radius: 10px;
+      color: var(--bg); background: var(--cyan); font-size: 14px; font-weight: 700; text-decoration: none;
+    }
+    .button.secondary { color: var(--text); background: var(--panel); border-color: rgba(152, 121, 255, .45); }
+    .viewer { overflow: hidden; border: 1px solid rgba(91, 231, 245, .28); border-radius: 16px; background: var(--panel); box-shadow: 0 24px 80px rgba(0, 0, 0, .34); }
+    iframe { display: block; width: 100%; height: min(74vh, 820px); border: 0; background: white; }
+    footer { margin-top: 24px; color: #7182a7; font-size: 12px; }
+    @media (max-width: 640px) {
+      main { padding-top: 36px; }
+      .button { width: 100%; }
+      iframe { height: 62vh; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">PROJETO CLON · APRESENTAÇÃO DE 3 MINUTOS</p>
+    <h1>Sua vida. Suas regras. Seu clone.</h1>
+    <p class="intro">Conheça o sistema operacional pessoal de IA que coordena trabalho, comunicação, vida e bem-estar mantendo a pessoa no controle.</p>
+    <div class="actions">
+      <a class="button" href="CLON_Apresentacao_3_minutos.pptx" download>Baixar PowerPoint</a>
+      <a class="button secondary" href="CLON_Apresentacao_3_minutos.pdf" target="_blank" rel="noopener">Abrir PDF</a>
+    </div>
+    <section class="viewer" aria-label="Visualização da apresentação">
+      <iframe src="CLON_Apresentacao_3_minutos.pdf#view=FitH" title="Apresentação do projeto CLON"></iframe>
+    </section>
+    <footer>CLON · Open source · apresentação com 5 slides e notas do apresentador.</footer>
+  </main>
+</body>
+</html>
